@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="通知方式"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="12dp"/>
+
+        <RadioGroup
+            android:id="@+id/radioGroupNotifyType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/radioEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="仅邮件通知"
+                android:textSize="15sp"
+                android:padding="8dp"/>
+
+        </RadioGroup>
+
+
+
+        <LinearLayout
+            android:id="@+id/layoutEmailSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="邮件紧急联系人"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/etToEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="收件人邮箱"
+                android:inputType="textEmailAddress"
+                android:padding="12dp"
+                android:background="@android:drawable/editbox_background"
+                android:layout_marginBottom="12dp"/>
+
+            <EditText
+                android:id="@+id/etFromEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="发件人邮箱"
+                android:inputType="textEmailAddress"
+                android:padding="12dp"
+                android:background="@android:drawable/editbox_background"
+                android:layout_marginBottom="12dp"/>
+
+            <EditText
+                android:id="@+id/etAuthCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="授权码"
+                android:inputType="textPassword"
+                android:padding="12dp"
+                android:background="@android:drawable/editbox_background"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <EditText
+                    android:id="@+id/etSmtpHost"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="SMTP 服务器"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:background="@android:drawable/editbox_background"/>
+
+                <EditText
+                    android:id="@+id/etSmtpPort"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:hint="端口"
+                    android:inputType="number"
+                    android:padding="12dp"
+                    android:background="@android:drawable/editbox_background"
+                    android:layout_marginStart="8dp"/>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnTestEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="发送测试邮件"
+                android:layout_marginBottom="16dp"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="警报消息内容"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/etAlertMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="请输入警报消息"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:padding="12dp"
+            android:background="@android:drawable/editbox_background"/>
+
+    </LinearLayout>
+
+</ScrollView>

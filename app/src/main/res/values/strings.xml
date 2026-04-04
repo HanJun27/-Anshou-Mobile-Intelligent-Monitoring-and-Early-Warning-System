@@ -1,0 +1,63 @@
+<resources>
+    <string name="app_name">安守</string>
+    <string name="app_description">您的安全守护者</string>
+    
+    <!-- 签到 -->
+    <string name="checkin_title">今日安全签到</string>
+    <string name="checkin_not_yet">今日尚未签到</string>
+    <string name="checkin_done">今日已签到</string>
+    <string name="checkin_button">立即签到</string>
+    <string name="checkin_success">签到成功！今日已记录您的安全状态</string>
+    
+    <!-- 统计 -->
+    <string name="stats_title">今日设备使用统计</string>
+    <string name="boot_time">开机时间:</string>
+    <string name="app_usage">应用使用:</string>
+    <string name="hours">小时</string>
+    <string name="minutes">分钟</string>
+    
+    <!-- 设置 -->
+    <string name="settings_title">紧急联系人设置</string>
+    <string name="contact_hint">紧急联系人电话</string>
+    <string name="message_hint">警报消息内容</string>
+    <string name="test_sms">发送测试短信</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    
+    <!-- 警报 -->
+    <string name="alert_triggered">⚠️ 安全警报已触发</string>
+    <string name="alert_sent">已向紧急联系人发送通知</string>
+    <string name="default_alert">紧急情况！请立即联系我！</string>
+    
+    <!-- 辅助功能服务 -->
+    <string name="accessibility_service_description">安守 - 后台保活服务
+
+此服务用于确保应用能够在后台持续运行，以便在紧急情况下能够及时发送警报。
+
+本服务不会：
+• 读取您的屏幕内容
+• 记录您的操作
+• 收集任何隐私数据
+
+仅用于保持应用后台存活，确保紧急报警功能正常工作。</string>
+    <string name="accessibility_service_title">后台保活增强 (辅助功能)</string>
+    <string name="accessibility_service_summary">开启后应用极难被系统杀死，确保紧急报警功能始终可用</string>
+    
+    <!-- ✅ 邮箱配置指引服务 -->
+    <string name="email_guide_accessibility_description">安守 - 邮箱配置智能指引
+
+此服务用于提供邮箱授权码获取的实时引导，包括：
+• 检测您当前所在的页面
+• 自动显示对应的操作指引
+• 悬浮窗展示图文说明
+
+安全承诺：
+• 仅在邮箱配置过程中使用
+• 不会读取敏感信息（如密码、授权码）
+• 不会执行任何危险操作
+• 配置完成后可关闭此服务</string>
+    <string name="email_guide_service_title">邮箱配置指引 (辅助功能)</string>
+    <string name="email_guide_service_summary">提供邮箱授权码获取的智能引导服务</string>
+
+
+</resources>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="添加被守护人"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="配置需要接收警报的邮箱地址和授权码"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"/>
+
+    <!-- 添加按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddTarget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="添加被守护人"
+        android:textAllCaps="false"
+        app:icon="@drawable/ic_add"
+        app:iconGravity="textStart"/>
+
+    <!-- 提示文本 -->
+    <TextView
+        android:id="@+id/tvHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="后续您可以在：\n主页下方导航栏 - 守护按钮 - 左下角 + 号按钮\n或\n右上角设置界面 - 添加被守护人"
+        android:textSize="13sp"
+        android:textColor="@color/text_hint"
+        android:lineSpacingExtra="4dp"/>
+
+    <!-- 已添加的被守护人列表标题 -->
+    <TextView
+        android:id="@+id/tvListTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="已添加的被守护人"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:visibility="gone"/>
+
+    <!-- 被守护人列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewTargets"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:overScrollMode="ifContentScrolls"
+        android:visibility="gone"/>
+
+    <!-- 跳过按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSkip"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="稍后再说"
+        android:textAllCaps="false"/>
+
+</LinearLayout>

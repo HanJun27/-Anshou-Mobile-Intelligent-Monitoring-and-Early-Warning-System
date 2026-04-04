@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外部存储目录 -->
+    <external-path
+        name="external_files"
+        path="." />
+    
+    <!-- 应用私有图片目录 -->
+    <external-files-path
+        name="images"
+        path="Pictures" />
+    
+    <!-- 应用私有视频目录 -->
+    <external-files-path
+        name="videos"
+        path="Movies" />
+    
+    <!-- 缓存目录 -->
+    <cache-path
+        name="cache"
+        path="." />
+</paths>

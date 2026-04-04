@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: huozhene-backend
+  
+  # 数据源配置 - MySQL
+  datasource:
+    url: jdbc:mysql://localhost:3306/huozhene_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 206663021
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+  
+  # H2 控制台 (开发环境使用)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT 配置
+jwt:
+  secret: your-secret-key-here-must-be-at-least-256-bits-long-for-hs256
+  expiration: 86400000 # 24 hours
+
+# 日志配置
+logging:
+  level:
+    com.livewell: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG

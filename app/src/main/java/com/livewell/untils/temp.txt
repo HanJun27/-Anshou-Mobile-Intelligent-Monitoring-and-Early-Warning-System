@@ -1,0 +1,766 @@
+package com.livewell.untils
+
+
+import com.livewell.model.AlertHistoryRecord
+import android.content.Context
+import android.content.SharedPreferences
+import java.text.SimpleDateFormat
+import java.util.*
+
+class PrefsManager(context: Context) {
+    
+    private val prefs: SharedPreferences = context.getSharedPreferences("livewell_prefs", Context.MODE_PRIVATE)
+    
+    companion object {
+        // 原有常量
+        private const val KEY_LAST_CHECKIN_DATE = "last_checkin_date"
+        private const val KEY_EMERGENCY_CONTACT = "emergency_contact"
+        private const val KEY_ALERT_MESSAGE = "alert_message"
+        private const val KEY_CHECKIN_TIME = "checkin_time"
+        private const val KEY_LAST_ALERT_TIME = "last_alert_time"
+        
+        // 邮件相关常量
+        private const val KEY_EMERGENCY_EMAIL = "emergency_email"
+        private const val KEY_EMAIL_SUBJECT = "email_subject"
+        private const val KEY_EMAIL_CONTENT = "email_content"
+        private const val KEY_NOTIFY_TYPE = "notify_type"
+        
+        // 模式相关常量
+        private const val KEY_APP_MODE = "app_mode"
+        private const val KEY_LAST_EMAIL_CHECK = "last_email_check"
+        private const val KEY_APP_USAGE_THRESHOLD = "app_usage_threshold"
+        private const val KEY_ALERT_CONFIRM_ENABLED = "alert_confirm_enabled"
+        private const val KEY_ALERT_DURATION = "alert_duration"
+        private const val KEY_SMART_MODE_ENABLED = "smart_mode_enabled"
+        private const val KEY_HISTORY_DATA = "history_data"
+        
+        // 广播接收器
+        private const val KEY_USER_CONFIRMED = "user_confirmed"
+        private const val KEY_LAST_CONFIRM_TIME = "last_confirm_time"
+        private const val KEY_SNOOZE_REQUESTED = "snooze_requested"
+        private const val KEY_SNOOZE_TIME = "snooze_time"
+        private const val KEY_PURE_USAGE_MODE = "pure_usage_mode"
+        
+        // 运动监测
+        private const val KEY_STEP_THRESHOLD = "step_threshold"
+        private const val KEY_STEP_MONITOR_ENABLED = "step_monitor_enabled"
+        
+        // 通知方式常量
+        const val NOTIFY_PHONE = "phone"
+        const val NOTIFY_EMAIL = "email"
+        const val NOTIFY_BOTH = "both"
+        
+        // 模式常量
+        const val MODE_GUARDIAN = "guardian"
+        const val MODE_RECEIVER = "receiver"
+        const val MODE_MIXED = "mixed"
+        
+        // 睡眠监测
+         private const val KEY_SLEEP_STEP_THRESHOLD = "sleep_step_threshold"
+        private const val KEY_SLEEP_MONITOR_ENABLED = "sleep_monitor_enabled"
+        private const val KEY_SLEEP_MODE = "sleep_mode"
+        private const val KEY_WAKE_UP_TOLERANCE_HOURS = "wake_up_tolerance_hours"
+        private const val KEY_GYRO_ENABLED = "gyro_enabled"
+        private const val KEY_SLEEP_START_HOUR = "sleep_start_hour"
+        private const val KEY_SLEEP_START_MINUTE = "sleep_start_minute"
+        private const val KEY_SLEEP_END_HOUR = "sleep_end_hour"
+        private const val KEY_SLEEP_END_MINUTE = "sleep_end_minute"
+        private const val KEY_INACTIVE_THRESHOLD = "inactive_threshold"
+        private const val KEY_ACCEL_THRESHOLD = "accel_threshold"
+        private const val KEY_AWAKE_STEP_THRESHOLD = "awake_step_threshold"
+        private const val KEY_SLEEP_DATA = "sleep_data"
+        
+        // 测试数据
+        private const val KEY_TEST_SIGNED = "test_signed"
+        private const val KEY_TEST_BOOT_TIME = "test_boot_time"
+        private const val KEY_TEST_APP_USAGE = "test_app_usage"
+        private const val KEY_TEST_STEP_COUNT = "test_step_count"
+        private const val KEY_TEST_WAKE_HOUR = "test_wake_hour"
+        private const val KEY_TEST_WAKE_MINUTE = "test_wake_minute"
+        private const val KEY_TEST_MODE = "test_mode"
+        
+        // 后台保活
+        private const val KEY_BATTERY_OPTIMIZATION_REQUESTED = "battery_optimization_requested"
+        private const val KEY_AUTO_START_REQUESTED = "auto_start_requested"
+        private const val KEY_SETTINGS_GUIDE_SHOWN = "settings_guide_shown"
+        private const val KEY_LAST_ALIVE_CHECK = "last_alive_check"
+        private const val KEY_NEXT_REMINDER_TIME = "next_reminder_time"
+        
+        // 无声音乐播放保活
+        private const val KEY_SILENT_MUSIC_ENABLED = "silent_music_enabled"
+        
+        // 辅助功能保活服务
+        private const val KEY_ACCESSIBILITY_SERVICE_ENABLED = "accessibility_service_enabled"
+        
+        // 开发者界面
+        private const val KEY_BACKGROUND_START_TIME = "background_start_time"
+        private const val KEY_BACKGROUND_TOTAL_TIME = "background_total_time"
+        private const val KEY_TIMER_RUNNING = "timer_running"
+        
+        // 历史记录
+        private const val KEY_ALERT_HISTORY = "alert_history"
+        private const val MAX_HISTORY_COUNT = 50
+        
+        // 报警时间
+        private const val KEY_ALERT_CHECK_HOUR = "alert_check_hour"
+        private const val KEY_ALERT_CHECK_MINUTE = "alert_check_minute"
+        
+        // 自动报警模式
+        private const val KEY_AUTO_ALERT_MODE_ENABLED = "auto_alert_mode_enabled"
+        private const val KEY_ALERT_CRITERIA = "alert_criteria"
+        
+        // 测试邮件
+        private const val KEY_TEST_EMAIL_ENABLED = "test_email_enabled"
+        private const val KEY_LAST_TEST_EMAIL_TIME = "last_test_email_time"
+        private const val KEY_TEST_EMAIL_INTERVAL = "test_email_interval"
+        
+        // ✅ 步数相关常量
+        private const val KEY_STEP_COUNT = "step_count"
+        private const val KEY_STEP_SAVE_DATE = "step_save_date"
+        
+        // 评判标准
+        const val CRITERIA_USAGE_ONLY = "usage_only"
+        const val CRITERIA_STEP_ONLY = "step_only"
+        const val CRITERIA_MIXED = "mixed"
+    }
+    
+    // 原有方法
+    fun saveLastCheckinDate(date: String) {
+        prefs.edit().putString(KEY_LAST_CHECKIN_DATE, date).apply()
+    }
+    
+    fun getLastCheckinDate(): String? {
+        return prefs.getString(KEY_LAST_CHECKIN_DATE, null)
+    }
+    
+    fun saveEmergencyContact(contact: String) {
+        prefs.edit().putString(KEY_EMERGENCY_CONTACT, contact).apply()
+    }
+    
+    fun getEmergencyContact(): String? {
+        return prefs.getString(KEY_EMERGENCY_CONTACT, null)
+    }
+    
+    fun saveAlertMessage(message: String) {
+        prefs.edit().putString(KEY_ALERT_MESSAGE, message).apply()
+    }
+    
+    fun getAlertMessage(): String {
+        return prefs.getString(KEY_ALERT_MESSAGE, "紧急情况！请立即联系我！") ?: "紧急情况！请立即联系我！"
+    }
+    
+    fun saveCheckinTime(time: Long) {
+        prefs.edit().putLong(KEY_CHECKIN_TIME, time).apply()
+    }
+    
+    fun getCheckinTime(): Long {
+        return prefs.getLong(KEY_CHECKIN_TIME, 0)
+    }
+    
+    fun saveLastAlertTime(time: Long) {
+        prefs.edit().putLong(KEY_LAST_ALERT_TIME, time).apply()
+    }
+    
+    fun getLastAlertTime(): Long {
+        return prefs.getLong(KEY_LAST_ALERT_TIME, 0)
+    }
+    
+    // 邮件相关方法
+    fun saveNotifyType(type: String) {
+        prefs.edit().putString(KEY_NOTIFY_TYPE, type).apply()
+    }
+    
+    fun getNotifyType(): String {
+        return prefs.getString(KEY_NOTIFY_TYPE, "phone") ?: "phone"
+    }
+    
+    fun saveEmergencyEmail(email: String) {
+        prefs.edit().putString(KEY_EMERGENCY_EMAIL, email).apply()
+    }
+    
+    fun getEmergencyEmail(): String? {
+        return prefs.getString(KEY_EMERGENCY_EMAIL, null)
+    }
+    
+    fun saveEmailSubject(subject: String) {
+        prefs.edit().putString(KEY_EMAIL_SUBJECT, subject).apply()
+    }
+    
+    fun getEmailSubject(): String {
+        return prefs.getString(KEY_EMAIL_SUBJECT, "安全警报") ?: "安全警报"
+    }
+    
+    fun saveEmailContent(content: String) {
+        prefs.edit().putString(KEY_EMAIL_CONTENT, content).apply()
+    }
+    
+    fun getEmailContent(): String {
+        return prefs.getString(KEY_EMAIL_CONTENT, "这是来自'活着呢'应用的紧急警报") ?: "这是来自'活着呢'应用的紧急警报"
+    }
+    
+    fun setEmailEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("email_enabled", enabled).apply()
+    }
+    
+    fun isEmailEnabled(): Boolean {
+        return prefs.getBoolean("email_enabled", false)
+    }
+    
+    fun setEmailTo(email: String) {
+        prefs.edit().putString("email_to", email).apply()
+    }
+    
+    fun getEmailTo(): String? {
+        return prefs.getString("email_to", null)
+    }
+    
+    fun setEmailSmtpHost(host: String) {
+        prefs.edit().putString("email_host", host).apply()
+    }
+    
+    fun getEmailSmtpHost(): String {
+        return prefs.getString("email_host", "smtp.qq.com") ?: "smtp.qq.com"
+    }
+    
+    fun setEmailSmtpPort(port: String) {
+        prefs.edit().putString("email_port", port).apply()
+    }
+    
+    fun getEmailSmtpPort(): String {
+        return prefs.getString("email_port", "587") ?: "587"
+    }
+    
+    // 模式相关方法
+    fun saveAppMode(mode: String) {
+        prefs.edit().putString(KEY_APP_MODE, mode).apply()
+    }
+    
+    fun getAppMode(): String {
+        return prefs.getString(KEY_APP_MODE, MODE_GUARDIAN) ?: MODE_GUARDIAN
+    }
+    
+    fun saveLastEmailCheckTime(time: Long) {
+        prefs.edit().putLong(KEY_LAST_EMAIL_CHECK, time).apply()
+    }
+    
+    fun getLastEmailCheckTime(): Long {
+        return prefs.getLong(KEY_LAST_EMAIL_CHECK, 0)
+    }
+
+
+fun getAppUsageThreshold(): Int {
+    return prefs.getInt(KEY_APP_USAGE_THRESHOLD, 30) // 默认5分钟
+}
+
+fun setAppUsageThreshold(minutes: Int) {
+    prefs.edit().putInt(KEY_APP_USAGE_THRESHOLD, minutes).apply()
+}
+// 确认机制设置
+fun isAlertConfirmEnabled(): Boolean {
+    return prefs.getBoolean(KEY_ALERT_CONFIRM_ENABLED, true) // 默认开启
+}
+
+fun setAlertConfirmEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_ALERT_CONFIRM_ENABLED, enabled).apply()
+}
+
+fun getAlertDuration(): Int {
+    return prefs.getInt(KEY_ALERT_DURATION, 5) // 默认5分钟
+}
+
+fun setAlertDuration(minutes: Int) {
+    prefs.edit().putInt(KEY_ALERT_DURATION, minutes).apply()
+}
+
+// 智能模式设置
+fun isSmartModeEnabled(): Boolean {
+    return prefs.getBoolean(KEY_SMART_MODE_ENABLED, true) // 默认开启
+}
+
+fun setSmartModeEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_SMART_MODE_ENABLED, enabled).apply()
+}
+
+// 历史数据存储（用于智能模式）
+fun saveHistoryData(data: String) {
+    prefs.edit().putString(KEY_HISTORY_DATA, data).apply()
+}
+
+fun getHistoryData(): String {
+    return prefs.getString(KEY_HISTORY_DATA, "") ?: ""
+}
+
+// 用户确认状态
+fun setUserConfirmed(confirmed: Boolean) {
+    prefs.edit().putBoolean(KEY_USER_CONFIRMED, confirmed).apply()
+}
+
+fun isUserConfirmed(): Boolean {
+    return prefs.getBoolean(KEY_USER_CONFIRMED, false)
+}
+
+fun setLastConfirmTime(time: Long) {
+    prefs.edit().putLong(KEY_LAST_CONFIRM_TIME, time).apply()
+}
+
+fun getLastConfirmTime(): Long {
+    return prefs.getLong(KEY_LAST_CONFIRM_TIME, 0)
+}
+
+// 稍后提醒状态
+fun setSnoozeRequested(requested: Boolean) {
+    prefs.edit().putBoolean(KEY_SNOOZE_REQUESTED, requested).apply()
+}
+
+fun isSnoozeRequested(): Boolean {
+    return prefs.getBoolean(KEY_SNOOZE_REQUESTED, false)
+}
+
+fun setSnoozeTime(time: Long) {
+    prefs.edit().putLong(KEY_SNOOZE_TIME, time).apply()
+}
+
+fun getSnoozeTime(): Long {
+    return prefs.getLong(KEY_SNOOZE_TIME, 0)
+}
+
+// 清除确认状态（每天重置）
+fun resetDailyConfirmStatus() {
+    setUserConfirmed(false)
+    setSnoozeRequested(false)
+}
+
+// 纯设备使用统计模式（默认关闭）
+fun setPureUsageMode(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_PURE_USAGE_MODE, enabled).apply()
+}
+
+fun isPureUsageMode(): Boolean {
+    return prefs.getBoolean(KEY_PURE_USAGE_MODE, false)
+}
+
+// 步数阈值设置
+fun setStepThreshold(steps: Int) {
+    prefs.edit().putInt(KEY_STEP_THRESHOLD, steps).apply()
+}
+
+fun getStepThreshold(): Int {
+    return prefs.getInt(KEY_STEP_THRESHOLD, 100) // 默认100步
+}
+
+// 步数监测开关
+fun setStepMonitorEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_STEP_MONITOR_ENABLED, enabled).apply()
+}
+
+fun isStepMonitorEnabled(): Boolean {
+    return prefs.getBoolean(KEY_STEP_MONITOR_ENABLED, true) // 默认开启
+}
+
+// 睡眠监测开关
+fun setSleepMonitorEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_SLEEP_MONITOR_ENABLED, enabled).apply()
+}
+
+fun isSleepMonitorEnabled(): Boolean {
+    return prefs.getBoolean(KEY_SLEEP_MONITOR_ENABLED, false)
+}
+
+// 睡眠监测模式
+fun setSleepMode(mode: String) {
+    prefs.edit().putString(KEY_SLEEP_MODE, mode).apply()
+}
+
+fun getSleepMode(): String {
+    return prefs.getString(KEY_SLEEP_MODE, "balanced") ?: "balanced" // 默认均衡模式
+}
+
+// 陀螺仪开关（作为可选增强）
+fun setGyroEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_GYRO_ENABLED, enabled).apply()
+}
+
+fun isGyroEnabled(): Boolean {
+    return prefs.getBoolean(KEY_GYRO_ENABLED, false) // 默认关闭
+}
+
+// 预设起床时间
+fun setWakeUpTime(hour: Int, minute: Int) {
+    prefs.edit().putInt(KEY_SLEEP_END_HOUR, hour).apply()
+    prefs.edit().putInt(KEY_SLEEP_END_MINUTE, minute).apply()
+}
+
+fun getWakeUpHour(): Int {
+    return prefs.getInt(KEY_SLEEP_END_HOUR, 6) // 默认6:00
+}
+
+fun setWakeUpHour(hour: Int) {
+    prefs.edit().putInt(KEY_SLEEP_END_HOUR, hour).apply()
+}
+
+fun setWakeUpHour(hour: Int) {
+    prefs.edit().putInt(KEY_SLEEP_END_HOUR, hour).apply()
+}
+
+fun getWakeUpMinute(): Int {
+    return prefs.getInt(KEY_SLEEP_END_MINUTE, 0)
+}
+
+fun setWakeUpMinute(minute: Int) {
+    prefs.edit().putInt(KEY_SLEEP_END_MINUTE, minute).apply()
+}
+
+/**
+ * ✅ 新增：获取起床容忍时长（小时）
+ */
+fun getWakeUpToleranceHours(): Int {
+    return prefs.getInt(KEY_WAKE_UP_TOLERANCE_HOURS, 2)  // ✅ 正确
+}
+
+fun setWakeUpToleranceHours(hours: Int) {
+    prefs.edit().putInt(KEY_WAKE_UP_TOLERANCE_HOURS, hours).apply()  // ✅ 正确
+}
+
+// 预设入睡时间（用于参考）
+fun setSleepTime(hour: Int, minute: Int) {
+    prefs.edit().putInt(KEY_SLEEP_START_HOUR, hour).apply()
+    prefs.edit().putInt(KEY_SLEEP_START_MINUTE, minute).apply()
+}
+
+fun getSleepHour(): Int {
+    return prefs.getInt(KEY_SLEEP_START_HOUR, 23) // 默认23:00
+}
+
+fun getSleepMinute(): Int {
+    return prefs.getInt(KEY_SLEEP_START_MINUTE, 0)
+}
+
+// 无活动判定时间（分钟）
+fun setInactiveThreshold(minutes: Int) {
+    prefs.edit().putInt(KEY_INACTIVE_THRESHOLD, minutes).apply()
+}
+
+fun getInactiveThreshold(): Int {
+    return prefs.getInt(KEY_INACTIVE_THRESHOLD, 30) // 默认30分钟
+}
+
+// 步数增长阈值（入睡判定）// 修改后
+// 睡眠步数阈值
+fun setSleepStepThreshold(steps: Int) {
+    prefs.edit().putInt(KEY_SLEEP_STEP_THRESHOLD, steps).apply()
+}
+
+fun getSleepStepThreshold(): Int {
+    return prefs.getInt(KEY_SLEEP_STEP_THRESHOLD, 10)
+}
+
+// 加速度变化阈值（m/s²）
+fun setAccelThreshold(threshold: Float) {
+    prefs.edit().putFloat(KEY_ACCEL_THRESHOLD, threshold).apply()
+}
+
+fun getAccelThreshold(): Float {
+    return prefs.getFloat(KEY_ACCEL_THRESHOLD, 1.5f) // 默认1.5 m/s²
+}
+
+// 醒来步数阈值
+fun setAwakeStepThreshold(steps: Int) {
+    prefs.edit().putInt(KEY_AWAKE_STEP_THRESHOLD, steps).apply()
+}
+
+fun getAwakeStepThreshold(): Int {
+    return prefs.getInt(KEY_AWAKE_STEP_THRESHOLD, 10) // 默认10步
+}
+
+// 睡眠历史数据存储
+fun saveSleepRecord(record: String) {
+    val history = getSleepHistory()
+    val updatedHistory = if (history.isEmpty()) record else "$history\n$record"
+    // 只保留最近30条记录
+    val lines = updatedHistory.split("\n")
+    val last30 = if (lines.size > 30) lines.takeLast(30) else lines
+    prefs.edit().putString(KEY_SLEEP_DATA, last30.joinToString("\n")).apply()
+}
+
+fun getSleepHistory(): String {
+    return prefs.getString(KEY_SLEEP_DATA, "") ?: ""
+}
+
+// 获取平均睡眠时间（用于学习）
+fun getAverageSleepTime(): Long {
+    val history = getSleepHistory()
+    if (history.isEmpty()) return 8 * 60 * 60 * 1000L // 默认8小时
+    
+    var totalDuration = 0L
+    var count = 0
+    val lines = history.split("\n").takeLast(7) // 用最近7天
+    
+    for (line in lines) {
+        val parts = line.split(",")
+        if (parts.size >= 3) {
+            try {
+                val sleepTime = parts[1].toLong()
+                val wakeTime = parts[2].toLong()
+                totalDuration += (wakeTime - sleepTime)
+                count++
+            } catch (e: Exception) {
+                // 忽略解析错误
+            }
+        }
+    }
+    
+    return if (count > 0) totalDuration / count else 8 * 60 * 60 * 1000L
+}
+
+fun setTestData(isSigned: Boolean, bootTime: Float, appUsage: Int, stepCount: Int, wakeHour: Int, wakeMinute: Int) {
+    prefs.edit().putBoolean(KEY_TEST_SIGNED, isSigned).apply()
+    prefs.edit().putFloat(KEY_TEST_BOOT_TIME, bootTime).apply()
+    prefs.edit().putInt(KEY_TEST_APP_USAGE, appUsage).apply()
+    prefs.edit().putInt(KEY_TEST_STEP_COUNT, stepCount).apply()
+    prefs.edit().putInt(KEY_TEST_WAKE_HOUR, wakeHour).apply()
+    prefs.edit().putInt(KEY_TEST_WAKE_MINUTE, wakeMinute).apply()
+    prefs.edit().putBoolean(KEY_TEST_MODE, true).apply()
+}
+
+fun clearTestData() {
+    prefs.edit().putBoolean(KEY_TEST_MODE, false).apply()
+}
+
+fun isTestMode(): Boolean {
+    return prefs.getBoolean(KEY_TEST_MODE, false)
+}
+
+fun getTestSigned(): Boolean {
+    return prefs.getBoolean(KEY_TEST_SIGNED, false)
+}
+
+fun getTestBootTime(): Float {
+    return prefs.getFloat(KEY_TEST_BOOT_TIME, 0f)
+}
+
+fun getTestAppUsage(): Int {
+    return prefs.getInt(KEY_TEST_APP_USAGE, 0)
+}
+
+fun getTestStepCount(): Int {
+    return prefs.getInt(KEY_TEST_STEP_COUNT, 0)
+}
+
+fun getTestWakeHour(): Int {
+    return prefs.getInt(KEY_TEST_WAKE_HOUR, 7)
+}
+
+fun getTestWakeMinute(): Int {
+    return prefs.getInt(KEY_TEST_WAKE_MINUTE, 0)
+}
+
+fun setBatteryOptimizationRequested(requested: Boolean) {
+    prefs.edit().putBoolean(KEY_BATTERY_OPTIMIZATION_REQUESTED, requested).apply()
+}
+
+fun isBatteryOptimizationRequested(): Boolean {
+    return prefs.getBoolean(KEY_BATTERY_OPTIMIZATION_REQUESTED, false)
+}
+
+// 记录是否已请求过自启动权限
+fun setAutoStartRequested(requested: Boolean) {
+    prefs.edit().putBoolean(KEY_AUTO_START_REQUESTED, requested).apply()
+}
+
+fun isAutoStartRequested(): Boolean {
+    return prefs.getBoolean(KEY_AUTO_START_REQUESTED, false)
+}
+
+// 记录是否已显示过设置引导
+fun setSettingsGuideShown(shown: Boolean) {
+    prefs.edit().putBoolean(KEY_SETTINGS_GUIDE_SHOWN, shown).apply()
+}
+
+fun isSettingsGuideShown(): Boolean {
+    return prefs.getBoolean(KEY_SETTINGS_GUIDE_SHOWN, false)
+}
+
+// 更新最后存活时间（用于自检）
+fun updateLastAliveTime() {
+    prefs.edit().putLong(KEY_LAST_ALIVE_CHECK, System.currentTimeMillis()).apply()
+}
+
+fun getLastAliveTime(): Long {
+    return prefs.getLong(KEY_LAST_ALIVE_CHECK, 0)
+}
+
+fun setNextReminderTime(time: Long) {
+    prefs.edit().putLong(KEY_NEXT_REMINDER_TIME, time).apply()
+}
+
+fun getNextReminderTime(): Long {
+    return prefs.getLong(KEY_NEXT_REMINDER_TIME, 0)
+}
+
+    // 计时器相关方法
+    fun setBackgroundStartTime(time: Long) {
+        prefs.edit().putLong(KEY_BACKGROUND_START_TIME, time).apply()
+    }
+
+    fun getBackgroundStartTime(): Long {
+        return prefs.getLong(KEY_BACKGROUND_START_TIME, 0)
+    }
+
+    fun setBackgroundTotalTime(time: Long) {
+        prefs.edit().putLong(KEY_BACKGROUND_TOTAL_TIME, time).apply()
+    }
+
+    fun getBackgroundTotalTime(): Long {
+        return prefs.getLong(KEY_BACKGROUND_TOTAL_TIME, 0)
+    }
+
+    fun setTimerRunning(running: Boolean) {
+        prefs.edit().putBoolean(KEY_TIMER_RUNNING, running).apply()
+    }
+
+    fun isTimerRunning(): Boolean {
+        return prefs.getBoolean(KEY_TIMER_RUNNING, false)
+    }
+
+    // 重置计时器
+    fun resetBackgroundTimer() {
+        setBackgroundStartTime(0)
+        setBackgroundTotalTime(0)
+        setTimerRunning(false)
+    }
+
+fun saveLong(key: String, value: Long) {
+    prefs.edit().putLong(key, value).apply()
+}
+
+fun getLong(key: String, default: Long = 0L): Long {
+    return prefs.getLong(key, default)
+}
+
+private val gson = com.google.gson.Gson() // 需要添加 Gson 依赖
+
+// 添加历史记录
+fun addAlertHistory(record: AlertHistoryRecord) {
+    val history = getAlertHistory()
+    history.add(0, record) // 新记录添加到开头
+    
+    // 限制记录数量
+    while (history.size > MAX_HISTORY_COUNT) {
+        history.removeAt(history.size - 1)
+    }
+    
+    val json = gson.toJson(history)
+    prefs.edit().putString(KEY_ALERT_HISTORY, json).apply()
+}
+
+// 获取历史记录
+fun getAlertHistory(): MutableList<AlertHistoryRecord> {
+    val json = prefs.getString(KEY_ALERT_HISTORY, null) ?: return mutableListOf()
+    return try {
+        val type = object : com.google.gson.reflect.TypeToken<MutableList<AlertHistoryRecord>>() {}.type
+        gson.fromJson(json, type)
+    } catch (e: Exception) {
+        mutableListOf()
+    }
+}
+
+// 清除历史记录
+fun clearAlertHistory() {
+    prefs.edit().remove(KEY_ALERT_HISTORY).apply()
+}
+
+
+// 报警时间设置
+fun setAlertCheckTime(hour: Int, minute: Int) {
+    prefs.edit().putInt(KEY_ALERT_CHECK_HOUR, hour).apply()
+    prefs.edit().putInt(KEY_ALERT_CHECK_MINUTE, minute).apply()
+}
+
+fun getAlertCheckHour(): Int {
+    return prefs.getInt(KEY_ALERT_CHECK_HOUR, 23) // 默认 23 点
+}
+
+fun getAlertCheckMinute(): Int {
+    return prefs.getInt(KEY_ALERT_CHECK_MINUTE, 0) // 默认 0 分
+}
+
+// ✅ 新增：自动报警模式方法
+fun isAutoAlertModeEnabled(): Boolean {
+    return prefs.getBoolean(KEY_AUTO_ALERT_MODE_ENABLED, false)
+}
+
+fun setAutoAlertModeEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_AUTO_ALERT_MODE_ENABLED, enabled).apply()
+}
+
+fun getAlertCriteria(): String {
+    return prefs.getString(KEY_ALERT_CRITERIA, CRITERIA_MIXED) ?: CRITERIA_MIXED
+}
+
+fun setAlertCriteria(criteria: String) {
+    prefs.edit().putString(KEY_ALERT_CRITERIA, criteria).apply()
+}
+
+// ✅ 测试邮件开关
+fun isTestEmailEnabled(): Boolean {
+    return prefs.getBoolean(KEY_TEST_EMAIL_ENABLED, false)
+}
+
+fun setTestEmailEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_TEST_EMAIL_ENABLED, enabled).apply()
+}
+
+// ✅ 上次发送时间
+fun getLastTestEmailTime(): Long {
+    return prefs.getLong(KEY_LAST_TEST_EMAIL_TIME, 0)
+}
+
+fun setLastTestEmailTime(time: Long) {
+    prefs.edit().putLong(KEY_LAST_TEST_EMAIL_TIME, time).apply()
+}
+
+// ✅ 发送间隔（默认 30 分钟）
+fun getTestEmailInterval(): Int {
+    return prefs.getInt(KEY_TEST_EMAIL_INTERVAL, 30)
+}
+
+fun setTestEmailInterval(minutes: Int) {
+    prefs.edit().putInt(KEY_TEST_EMAIL_INTERVAL, minutes).apply()
+}
+
+
+fun saveStepCount(steps: Int) {
+    prefs.edit().putInt(KEY_STEP_COUNT, steps).apply()
+}
+
+fun getSavedStepCount(): Int {
+    return prefs.getInt(KEY_STEP_COUNT, 0)
+}
+
+fun saveStepSaveDate(dateKey: String) {
+    prefs.edit().putString(KEY_STEP_SAVE_DATE, dateKey).apply()
+}
+
+fun getLastStepSaveDate(): String {
+    return prefs.getString(KEY_STEP_SAVE_DATE, "") ?: ""
+}
+
+// 无声音乐播放保活设置
+fun isSilentMusicEnabled(): Boolean {
+    return prefs.getBoolean(KEY_SILENT_MUSIC_ENABLED, false) // 默认关闭
+}
+
+fun setSilentMusicEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_SILENT_MUSIC_ENABLED, enabled).apply()
+}
+
+// 辅助功能保活服务设置
+fun isAccessibilityServiceEnabled(): Boolean {
+    return prefs.getBoolean(KEY_ACCESSIBILITY_SERVICE_ENABLED, false)
+}
+
+fun setAccessibilityServiceEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean(KEY_ACCESSIBILITY_SERVICE_ENABLED, enabled).apply()
+}
+
+}

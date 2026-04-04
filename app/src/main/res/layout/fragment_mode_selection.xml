@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="欢迎使用安守"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="请选择您的使用目的"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="32dp"/>
+
+        <!-- 被守护模式 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGuardianMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="被守护模式"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp"
+            app:icon="@drawable/ic_alert"
+            app:iconGravity="textStart"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="监测本机用户状态，失能时发送警报给紧急联系人"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- 守护模式 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReceiverMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="守护模式"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp"
+            app:icon="@drawable/ic_guardian"
+            app:iconGravity="textStart"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="定期检测邮箱，接收他人发来的警报"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- 混合模式 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMixedMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="混合模式"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp"
+            app:icon="@drawable/ic_settings"
+            app:iconGravity="textStart"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="同时具备被守护和守护功能"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="32dp"/>
+
+    </LinearLayout>
+
+</ScrollView>

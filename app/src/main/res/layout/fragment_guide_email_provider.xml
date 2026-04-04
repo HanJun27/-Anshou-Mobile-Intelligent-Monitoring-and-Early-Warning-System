@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="发件人邮箱配置"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="请选择您的邮箱服务商并配置发件人信息"
+            android:textSize="15sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="24dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="选择邮箱服务商"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="16dp"/>
+
+                <RadioGroup
+                    android:id="@+id/radioGroupProvider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <RadioButton
+                        android:id="@+id/radioQQ"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="QQ 邮箱"
+                        android:textSize="16sp"
+                        android:checked="true"/>
+
+                    <RadioButton
+                        android:id="@+id/radio163"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="网易 163 邮箱"
+                        android:textSize="16sp"/>
+
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/btnQQConfig"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="配置 QQ 邮箱"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/btn163Config"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="配置 163 邮箱"
+                    style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/btnTestSend"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="发送测试邮件"
+            style="@style/Widget.Material3.Button"/>
+
+    </LinearLayout>
+
+</ScrollView>

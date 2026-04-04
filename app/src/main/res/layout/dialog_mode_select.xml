@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:maxHeight="600dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="选择应用工作模式"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="16dp"/>
+
+        <RadioGroup
+            android:id="@+id/radioGroupMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/radioGuardian"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="被守护模式"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 监测本机用户状态，失能时发送警报给紧急联系人"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="32dp"
+                android:layout_marginBottom="16dp"/>
+
+            <RadioButton
+                android:id="@+id/radioReceiver"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="守护模式"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 定期检测邮箱，接收他人发来的警报"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="32dp"
+                android:layout_marginBottom="8dp"/>
+            
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 收到警报时发出强化通知"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="32dp"
+                android:layout_marginBottom="16dp"/>
+
+            <RadioButton
+                android:id="@+id/radioMixed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="被守护 + 守护混合模式"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 同时具备守护和接收功能"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="32dp"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- 社区守护模式 -->
+            <RadioButton
+                android:id="@+id/radioCommunity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="社区守护模式"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 除发送警报外，同时向社区平台上报数据"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="32dp"
+                android:layout_marginBottom="8dp"/>
+            
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• 社区工作人员可实时查看健康数据"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="32dp"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- 社区守护模式专属配置面板（默认隐藏） -->
+            <LinearLayout
+                android:id="@+id/communitySettingsPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:background="@color/primary_light"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="社区配置"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="12dp"/>
+
+                <Button
+                    android:id="@+id/btnPersonalInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="个人信息设置"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/btnServerConfig"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="后端服务器配置"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+            </LinearLayout>
+
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/tvModeDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="守护模式：本机作为守护者，监测自身状态并发送警报"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:background="@color/primary_light"
+            android:padding="12dp"
+            android:gravity="center"
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+</ScrollView>

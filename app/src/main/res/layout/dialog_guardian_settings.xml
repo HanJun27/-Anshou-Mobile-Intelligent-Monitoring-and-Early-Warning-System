@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="守护设置"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"/>
+
+    <!-- 添加守护对象 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAddTarget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="添加守护对象"
+        android:textAllCaps="false"
+        app:icon="@drawable/ic_add"
+        app:iconGravity="textStart"/>
+
+    <!-- 守护对象管理 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnManageTargets"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="守护对象管理"
+        android:textAllCaps="false"
+        app:icon="@drawable/ic_guardian"
+        app:iconGravity="textStart"/>
+
+    <!-- 接收配置 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnReceiverConfig"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="接收配置"
+        android:textAllCaps="false"
+        app:icon="@drawable/ic_settings"
+        app:iconGravity="textStart"/>
+
+</LinearLayout>
