@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA">
+
+    <!-- Header -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/white"
+        android:elevation="4dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_heart"
+                app:tint="#AE2F34" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:fontFamily="sans-serif-black"
+                android:text="LiveWell"
+                android:textColor="#AE2F34"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginEnd="16dp"
+            android:text="跳过"
+            android:textAllCaps="true"
+            android:textColor="#808080"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_nav"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="添加被守护人"
+                android:textColor="#191C1D"
+                android:textSize="40sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:lineSpacingExtra="4dp"
+                android:text="您可以添加需要保护的家人或朋友。添加后，您可以随时在“设置 > 成员管理”中更新这些信息。"
+                android:textColor="#584140"
+                android:textSize="18sp" />
+
+            <!-- Add Member Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="40dp">
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:src="@drawable/ic_add"
+                        app:backgroundTint="#AE2F34"
+                        app:fabSize="normal"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="添加成员"
+                        android:textColor="#191C1D"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Members List -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="#F3F4F5"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="已添加的成员"
+                        android:textAllCaps="true"
+                        android:textColor="#584140"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:background="@drawable/bg_badge"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
+                        android:text="2 个人"
+                        android:textColor="#584140"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <!-- Member Item 1 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/avatar_father" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="父亲"
+                                android:textColor="#191C1D"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="father@email.com"
+                                android:textColor="#584140"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_delete"
+                            app:tint="#CCCCCC" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Member Item 2 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="1dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="#FFDAD7"
+                            android:padding="12dp"
+                            android:src="@drawable/ic_person"
+                            app:tint="#AE2F34" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="李阿姨"
+                                android:textColor="#191C1D"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="li_auntie@service.com"
+                                android:textColor="#584140"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_delete"
+                            app:tint="#CCCCCC" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Info Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@android:color/white"
+                android:orientation="horizontal"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_info"
+                    app:tint="#AE2F34" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="为什么要添加被守护人？"
+                        android:textColor="#191C1D"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="当系统检测到您的异常状态（如长时间未移动或紧急求助）时，安守将第一时间通知这些联系人，并分享您的实时位置，为您提供全天候的守护网络。"
+                        android:textColor="#584140"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Nav -->
+    <RelativeLayout
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F8F9FA"
+        android:padding="24dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:drawableStart="@drawable/ic_arrow_back"
+            android:drawablePadding="8dp"
+            android:text="PREVIOUS"
+            android:textColor="#808080"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:backgroundTint="#AE2F34"
+            android:paddingHorizontal="32dp"
+            android:paddingVertical="12dp"
+            android:text="NEXT"
+            android:textColor="@android:color/white"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_arrow_forward"
+            app:iconGravity="end" />
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

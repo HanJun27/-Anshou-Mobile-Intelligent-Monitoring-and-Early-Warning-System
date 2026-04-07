@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="12dp">
+
+    <CheckBox
+        android:id="@+id/cbPermission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="8dp">
+
+        <TextView
+            android:id="@+id/tvPermissionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="权限名称"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#191C1D"/>
+
+        <TextView
+            android:id="@+id/tvPermissionDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="权限说明"
+            android:textSize="13sp"
+            android:textColor="#584140"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+</LinearLayout>

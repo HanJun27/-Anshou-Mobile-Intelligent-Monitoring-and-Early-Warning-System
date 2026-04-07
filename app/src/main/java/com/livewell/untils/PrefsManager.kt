@@ -1456,5 +1456,68 @@ fun isCopiedFromBook(): Boolean {
     return prefs.getBoolean(KEY_COPIED_FROM_BOOK, false)
 }
 
+// ========== 功能设置界面相关方法 ==========
+
+/**
+ * 自动报警模式开关
+ */
+fun isAutoAlarmEnabled(): Boolean {
+    return prefs.getBoolean("auto_alarm_enabled", true)
+}
+
+fun setAutoAlarmEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean("auto_alarm_enabled", enabled).apply()
+}
+
+/**
+ * 报警模式（hybrid/time/steps）
+ */
+fun getAlarmMode(): String {
+    return prefs.getString("alarm_mode", "hybrid") ?: "hybrid"
+}
+
+fun saveAlarmMode(mode: String) {
+    prefs.edit().putString("alarm_mode", mode).apply()
+}
+
+/**
+ * 每日报警检查小时
+ */
+fun getAlarmCheckHour(): Int {
+    return prefs.getInt(KEY_ALERT_CHECK_HOUR, 20)
+}
+
+fun saveAlarmCheckHour(hour: Int) {
+    prefs.edit().putInt(KEY_ALERT_CHECK_HOUR, hour).apply()
+}
+
+/**
+ * 每日报警检查分钟
+ */
+fun getAlarmCheckMinute(): Int {
+    return prefs.getInt(KEY_ALERT_CHECK_MINUTE, 30)
+}
+
+fun saveAlarmCheckMinute(minute: Int) {
+    prefs.edit().putInt(KEY_ALERT_CHECK_MINUTE, minute).apply()
+}
+
+/**
+ * 警报持续时长（分钟）
+ */
+fun saveAlertDuration(minutes: Int) {
+    prefs.edit().putInt(KEY_ALERT_DURATION, minutes).apply()
+}
+
+/**
+ * 终极保活模式开关
+ */
+fun isProModeEnabled(): Boolean {
+    return prefs.getBoolean("pro_mode_enabled", false)
+}
+
+fun setProModeEnabled(enabled: Boolean) {
+    prefs.edit().putBoolean("pro_mode_enabled", enabled).apply()
+}
 
 }

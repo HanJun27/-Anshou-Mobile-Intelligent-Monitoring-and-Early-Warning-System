@@ -19,10 +19,11 @@ class HomeFragment : Fragment() {
     private lateinit var tvCheckinStatus: android.widget.TextView
     private lateinit var btnCheckin: MaterialButton
     private lateinit var cardCheckin: MaterialCardView
-    // 新增按钮引用
-    private lateinit var btnModeSelect: MaterialButton
-    private lateinit var btnAlertHistory: MaterialButton
-    private lateinit var btnTimeCapsule: MaterialButton
+    private lateinit var ivCheckinIcon: android.widget.ImageView
+    // 新增卡片引用（替代按钮）
+    private lateinit var cardModeSelect: MaterialCardView
+    private lateinit var cardAlertHistory: MaterialCardView
+    private lateinit var cardTimeCapsule: MaterialCardView
     
     // ✅ 连续点击标题相关
     private var titleClickCount = 0
@@ -47,10 +48,11 @@ class HomeFragment : Fragment() {
         tvCheckinStatus = view.findViewById(R.id.tvCheckinStatus)
         btnCheckin = view.findViewById(R.id.btnCheckin)
         cardCheckin = view.findViewById(R.id.cardCheckin)
-        // 获取模式选择和警报历史按钮
-        btnModeSelect = view.findViewById(R.id.btnModeSelect)
-        btnAlertHistory = view.findViewById(R.id.btnAlertHistory)
-        btnTimeCapsule = view.findViewById(R.id.btnTimeCapsule)
+        ivCheckinIcon = view.findViewById(R.id.ivCheckinIcon)
+        // 获取功能卡片
+        cardModeSelect = view.findViewById(R.id.cardModeSelect)
+        cardAlertHistory = view.findViewById(R.id.cardAlertHistory)
+        cardTimeCapsule = view.findViewById(R.id.cardTimeCapsule)
         
         // ✅ 设置标题卡片点击事件（连续点击 10 次进入开发者界面）
         setupTitleClickListener(view)
@@ -64,21 +66,21 @@ class HomeFragment : Fragment() {
             performCheckin()
         }
         
-        // 模式选择按钮
-        btnModeSelect.setOnClickListener {
+        // 模式选择卡片
+        cardModeSelect.setOnClickListener {
             (activity as? MainActivity)?.let { mainActivity ->
                 mainActivity.showModeSelectDialogPublic()
             }
         }
         
-        // 警报历史记录按钮
-        btnAlertHistory.setOnClickListener {
+        // 警报历史记录卡片
+        cardAlertHistory.setOnClickListener {
             val intent = Intent(requireContext(), AlertHistoryActivity::class.java)
             startActivity(intent)
         }
         
-        // 时光胶囊按钮
-        btnTimeCapsule.setOnClickListener {
+        // 时光胶囊卡片
+        cardTimeCapsule.setOnClickListener {
             (activity as? MainActivity)?.let { mainActivity ->
                 mainActivity.showTimeCapsuleDialog()
             }
@@ -120,10 +122,14 @@ class HomeFragment : Fragment() {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         prefsManager.saveCheckinTime(System.currentTimeMillis())
         
-        tvCheckinStatus.text = "今日已签到"
+        tvCheckinStatus.text = "今日已完成签到"
         tvCheckinStatus.setTextColor(requireContext().getColor(R.color.success))
+        ivCheckinIcon.setImageResource(android.R.drawable.ic_menu_send)
+        ivCheckinIcon.setColorFilter(requireContext().getColor(R.color.success))
         btnCheckin.isEnabled = false
-        btnCheckin.text = "已完成"
+        btnCheckin.text = "已签到"
+        btnCheckin.setBackgroundColor(requireContext().getColor(R.color.divider))
+        btnCheckin.setTextColor(requireContext().getColor(R.color.text_hint))
     }
     
     override fun onResume() {
@@ -166,15 +172,23 @@ class HomeFragment : Fragment() {
         val lastCheckin = prefsManager.getLastCheckinDate()
         
         if (today == lastCheckin) {
-            tvCheckinStatus.text = "今日已签到"
+            tvCheckinStatus.text = "今日已完成签到"
             tvCheckinStatus.setTextColor(requireContext().getColor(R.color.success))
+            ivCheckinIcon.setImageResource(android.R.drawable.ic_menu_send)
+            ivCheckinIcon.setColorFilter(requireContext().getColor(R.color.success))
             btnCheckin.isEnabled = false
-            btnCheckin.text = "已完成"
+            btnCheckin.text = "已签到"
+            btnCheckin.setBackgroundColor(requireContext().getColor(R.color.divider))
+            btnCheckin.setTextColor(requireContext().getColor(R.color.text_hint))
         } else {
             tvCheckinStatus.text = "今日尚未签到"
             tvCheckinStatus.setTextColor(requireContext().getColor(R.color.warning))
+            ivCheckinIcon.setImageResource(android.R.drawable.ic_dialog_alert)
+            ivCheckinIcon.setColorFilter(requireContext().getColor(R.color.warning))
             btnCheckin.isEnabled = true
             btnCheckin.text = "立即签到"
+            btnCheckin.setBackgroundColor(requireContext().getColor(R.color.primary))
+            btnCheckin.setTextColor(requireContext().getColor(R.color.white))
         }
     }
 }

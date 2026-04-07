@@ -45,7 +45,7 @@ class SettingsGuideActivity : AppCompatActivity() {
     private var totalSteps = 9  // 初始值，会在 loadFragmentsForMode 中根据模式动态更新
     
     // 用户选择的模式
-    private var selectedMode: String? = null
+    internal var selectedMode: String? = null
     
     private val fragments = mutableListOf<Fragment>()
     
@@ -59,7 +59,22 @@ class SettingsGuideActivity : AppCompatActivity() {
         btnPrevious = findViewById(R.id.btnPrevious)
         btnNext = findViewById(R.id.btnNext)
         
-        initFragments()
+        // ✅ 检查是否有之前保存的模式
+        val savedMode = prefsManager.getAppMode()
+        android.util.Log.d("SettingsGuide", "启动时检查: savedMode=$savedMode")
+        
+        if (savedMode != null && (savedMode == PrefsManager.MODE_GUARDIAN || 
+                                   savedMode == PrefsManager.MODE_RECEIVER || 
+                                   savedMode == PrefsManager.MODE_MIXED)) {
+            // 有保存的模式，直接加载对应的 Fragment
+            android.util.Log.d("SettingsGuide", "✅ 发现已保存的模式: $savedMode，直接加载")
+            loadFragmentsForMode(savedMode)
+        } else {
+            // 没有保存的模式，初始化基础 Fragment
+            android.util.Log.d("SettingsGuide", "⚠️ 未找到已保存的模式，初始化基础 Fragment")
+            initFragments()
+        }
+        
         setupViewPager()
         updateButtons()
     }
@@ -104,9 +119,11 @@ class SettingsGuideActivity : AppCompatActivity() {
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
+                android.util.Log.d("ViewPager", "📄 页面切换: position=$position, previous currentStep=$currentStep")
                 currentStep = position
                 prefsManager.saveSettingsGuideStep(position)
                 updateButtons()
+                android.util.Log.d("ViewPager", "✅ currentStep 已更新为: $currentStep")
             }
         })
     }
@@ -125,15 +142,20 @@ class SettingsGuideActivity : AppCompatActivity() {
         }
         
         btnNext.setOnClickListener {
+            android.util.Log.d("NextButton", "点击下一步: currentStep=$currentStep, selectedMode=$selectedMode, totalSteps=$totalSteps")
+            
             if (currentStep == 0) {
                 // 在权限页面，检查是否需要提醒
                 checkPermissionsAndProceed()
             } else if (currentStep == 1 && selectedMode == null) {
                 // ✅ 在模式选择页面但未选择模式，提示用户
+                android.util.Log.w("NextButton", "⚠️ 未选择模式，显示提示对话框")
                 showModeSelectionRequiredDialog()
             } else if (currentStep < totalSteps - 1) {
+                android.util.Log.d("NextButton", "✅ 跳转到下一步: ${currentStep + 1}")
                 viewPager.currentItem = currentStep + 1
             } else {
+                android.util.Log.d("NextButton", "✅ 完成引导")
                 finishGuide()
             }
         }
@@ -210,14 +232,6 @@ class SettingsGuideActivity : AppCompatActivity() {
         viewPager.currentItem = 0
         currentStep = 0
         updateButtons()
-        
-        // ✅ 延迟 500ms 后自动跳转到模式选择后的下一个界面
-        viewPager.postDelayed({
-            if (fragments.size > 2) {
-                // 直接跳到模式选择后的第一个配置页面（索引 2）
-                viewPager.currentItem = 2
-            }
-        }, 500)
     }
     
     override fun onBackPressed() {
@@ -372,11 +386,64 @@ class PermissionsFragment : SettingsGuideFragment() {
         }, 500)
     }
     
+    override fun onResume() {
+        super.onResume()
+        // ✅ 每次返回页面时，同步系统实际的权限状态
+        syncSystemPermissionStates()
+    }
+    
     private fun loadPermissionStates() {
         cbAccessibility.isChecked = prefsManager.isAccessibilityPermissionGranted()
         cbNotification.isChecked = prefsManager.isNotificationPermissionGranted()
         cbClipboard.isChecked = prefsManager.isClipboardPermissionGranted()
         cbOverlay.isChecked = prefsManager.isOverlayPermissionGranted()
+    }
+    
+    /**
+     * 同步系统实际的权限状态到 UI 和 SharedPreferences
+     */
+    private fun syncSystemPermissionStates() {
+        // 1. 检查无障碍服务是否真的开启
+        val isAccessibilityEnabled = isAccessibilityServiceEnabled()
+        if (isAccessibilityEnabled != cbAccessibility.isChecked) {
+            cbAccessibility.isChecked = isAccessibilityEnabled
+            prefsManager.setAccessibilityPermissionGranted(isAccessibilityEnabled)
+        }
+        
+        // 2. 检查通知权限（Android 13+）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasNotification = requireContext().checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (hasNotification != cbNotification.isChecked) {
+                cbNotification.isChecked = hasNotification
+                prefsManager.setNotificationPermissionGranted(hasNotification)
+            }
+        }
+        
+        // 3. 检查悬浮窗权限（Android 6.0+）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val hasOverlay = android.provider.Settings.canDrawOverlays(requireContext())
+            if (hasOverlay != cbOverlay.isChecked) {
+                cbOverlay.isChecked = hasOverlay
+                prefsManager.setOverlayPermissionGranted(hasOverlay)
+            }
+        }
+        
+        // 4. 剪贴板权限不需要检查系统状态（只是用户确认标记）
+    }
+    
+    /**
+     * 检查无障碍服务是否已启用
+     */
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val am = requireContext().getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        
+        for (service in enabledServices) {
+            if (service.resolveInfo.serviceInfo.packageName == requireContext().packageName) {
+                return true
+            }
+        }
+        return false
     }
     
     private fun setupCheckBoxListeners() {
@@ -804,6 +871,8 @@ class EmailProviderFragment : SettingsGuideFragment() {
         super.onViewCreated(view, savedInstanceState)
         
         val radioGroupProvider = view.findViewById<RadioGroup>(R.id.radioGroupProvider)
+        val cardQQ = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardQQ)
+        val card163 = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.card163)
         val btnQQ = view.findViewById<Button>(R.id.btnQQConfig)
         val btn163 = view.findViewById<Button>(R.id.btn163Config)
         val btnTest = view.findViewById<Button>(R.id.btnTestSend)
@@ -814,6 +883,16 @@ class EmailProviderFragment : SettingsGuideFragment() {
         // ✅ 监听 RadioGroup 选择变化
         radioGroupProvider.setOnCheckedChangeListener { _, checkedId ->
             updateConfigButtonsVisibility(checkedId, btnQQ, btn163)
+        }
+        
+        // ✅ 为 QQ 邮箱卡片添加点击事件
+        cardQQ.setOnClickListener {
+            radioGroupProvider.check(R.id.radioQQ)
+        }
+        
+        // ✅ 为 163 邮箱卡片添加点击事件
+        card163.setOnClickListener {
+            radioGroupProvider.check(R.id.radio163)
         }
         
         btnQQ.setOnClickListener {
@@ -1545,24 +1624,123 @@ class ModeSelectionFragment : SettingsGuideFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        val btnGuardian = view.findViewById<Button>(R.id.btnGuardianMode)
-        val btnReceiver = view.findViewById<Button>(R.id.btnReceiverMode)
-        val btnMixed = view.findViewById<Button>(R.id.btnMixedMode)
+        // ✅ 直接查找所有 MaterialCardView
+        val allCards = mutableListOf<com.google.android.material.card.MaterialCardView>()
+        findCardsInLayout(view, allCards)
         
-        // 被守护模式
-        btnGuardian.setOnClickListener {
-            (activity as? SettingsGuideActivity)?.loadFragmentsForMode(PrefsManager.MODE_GUARDIAN)
+        if (allCards.size >= 3) {
+            setupModeCard(allCards[0], "被守护模式", "监测本机用户状态，失能时发送警报给紧急联系人", R.drawable.ic_alert, PrefsManager.MODE_GUARDIAN)
+            setupModeCard(allCards[1], "守护模式", "定期检测邮箱，接收他人发来的警报", R.drawable.ic_guardian, PrefsManager.MODE_RECEIVER)
+            setupModeCard(allCards[2], "混合模式", "同时具备被守护和守护功能", R.drawable.ic_settings, PrefsManager.MODE_MIXED)
         }
+    }
+    
+    /**
+     * 递归查找所有 MaterialCardView
+     */
+    private fun findCardsInLayout(view: View, cards: MutableList<com.google.android.material.card.MaterialCardView>) {
+        if (view is com.google.android.material.card.MaterialCardView) {
+            cards.add(view)
+        }
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                findCardsInLayout(view.getChildAt(i), cards)
+            }
+        }
+    }
+    
+    /**
+     * 设置模式卡片
+     */
+    private fun setupModeCard(
+        card: com.google.android.material.card.MaterialCardView,
+        title: String,
+        description: String,
+        iconResId: Int,
+        mode: String
+    ) {
+        val ivIcon = card.findViewById<android.widget.ImageView>(R.id.ivModeIcon)
+        val tvTitle = card.findViewById<TextView>(R.id.tvModeTitle)
+        val tvDesc = card.findViewById<TextView>(R.id.tvModeDescription)
+        val rbSelect = card.findViewById<android.widget.RadioButton>(R.id.rbModeSelect)
         
-        // 守护模式
-        btnReceiver.setOnClickListener {
-            (activity as? SettingsGuideActivity)?.loadFragmentsForMode(PrefsManager.MODE_RECEIVER)
-        }
+        ivIcon.setImageResource(iconResId)
+        tvTitle.text = title
+        tvDesc.text = description
         
-        // 混合模式
-        btnMixed.setOnClickListener {
-            (activity as? SettingsGuideActivity)?.loadFragmentsForMode(PrefsManager.MODE_MIXED)
+        // ✅ 初始状态下不选中任何模式（即使 SharedPreferences 中有值）
+        // 只有当 Activity 的 selectedMode 与当前卡片模式匹配时才选中
+        val activitySelectedMode = (activity as? SettingsGuideActivity)?.selectedMode
+        rbSelect.isChecked = (activitySelectedMode == mode)
+        
+        // ✅ 选中状态样式
+        updateCardStyle(card, rbSelect.isChecked)
+        
+        // ✅ 点击卡片选择模式
+        card.setOnClickListener {
+            // 取消其他卡片的选中状态
+            deselectAllModes(card.parent as? ViewGroup)
+            
+            // 选中当前卡片
+            rbSelect.isChecked = true
+            updateCardStyle(card, true)
+            
+            // ✅ 保存选择的模式到 PrefsManager
+            prefsManager.saveAppMode(mode)
+            
+            // ✅ 同时更新 Activity 的 selectedMode 变量（关键修复！）
+            val guideActivity = activity as? SettingsGuideActivity
+            if (guideActivity != null) {
+                guideActivity.selectedMode = mode
+                android.util.Log.d("ModeSelection", "✅ 模式已选择: $mode, selectedMode = ${guideActivity.selectedMode}")
+            } else {
+                android.util.Log.e("ModeSelection", "❌ activity 为 null，无法更新 selectedMode")
+            }
+            
+            Toast.makeText(requireContext(), "已选择：$title", Toast.LENGTH_SHORT).show()
         }
+    }
+    
+    /**
+     * 更新卡片样式（选中/未选中）
+     */
+    private fun updateCardStyle(card: com.google.android.material.card.MaterialCardView, isSelected: Boolean) {
+        if (isSelected) {
+            card.strokeWidth = 4
+            card.strokeColor = ContextCompat.getColor(requireContext(), R.color.primary)
+            card.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.surface))
+        } else {
+            card.strokeWidth = 2
+            card.strokeColor = ContextCompat.getColor(requireContext(), android.R.color.darker_gray)
+            card.setCardBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+        }
+    }
+    
+    /**
+     * 取消所有模式的选中状态
+     */
+    private fun deselectAllModes(parent: ViewGroup?) {
+        parent?.let {
+            for (i in 0 until it.childCount) {
+                val child = it.getChildAt(i)
+                if (child is com.google.android.material.card.MaterialCardView) {
+                    val rb = child.findViewById<android.widget.RadioButton>(R.id.rbModeSelect)
+                    rb?.isChecked = false
+                    updateCardStyle(child, false)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 提示用户必须选择模式
+     */
+    private fun showModeSelectionRequiredDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("提示")
+            .setMessage("请先选择一个使用模式，然后继续下一步")
+            .setPositiveButton("确定", null)
+            .show()
     }
 }
 
@@ -1585,10 +1763,11 @@ class GuardianTargetsFragment : SettingsGuideFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        val btnAddTarget = view.findViewById<Button>(R.id.btnAddTarget)
-        val btnSkip = view.findViewById<Button>(R.id.btnSkip)
+        val btnAddTarget = view.findViewById<android.widget.LinearLayout>(R.id.btnAddTarget)
         val tvHint = view.findViewById<TextView>(R.id.tvHint)
         val tvListTitle = view.findViewById<TextView>(R.id.tvListTitle)
+        val tvMemberCount = view.findViewById<TextView>(R.id.tvMemberCount)
+        val llMembersList = view.findViewById<android.widget.LinearLayout>(R.id.llMembersList)
         val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerViewTargets)
         
         // 设置提示文本
@@ -1600,19 +1779,10 @@ class GuardianTargetsFragment : SettingsGuideFragment() {
         // 加载已添加的被守护人
         loadGuardianTargets()
         
+        // ✅ 为添加成员卡片添加点击事件
         btnAddTarget.setOnClickListener {
+            android.util.Log.d("GuardianTargets", "✅ 点击添加成员按钮")
             showAddTargetDialog()
-        }
-        
-        btnSkip.setOnClickListener {
-            // 跳过，继续下一步
-            (activity as? SettingsGuideActivity)?.let { activity ->
-                if (activity.currentStep < activity.viewPager.adapter?.itemCount?.minus(1) ?: 0) {
-                    activity.viewPager.currentItem = activity.currentStep + 1
-                } else {
-                    activity.finishGuide()
-                }
-            }
         }
     }
     
@@ -1645,14 +1815,21 @@ class GuardianTargetsFragment : SettingsGuideFragment() {
     
     private fun updateUIVisibility() {
         val tvListTitle = view?.findViewById<TextView>(R.id.tvListTitle)
+        val tvMemberCount = view?.findViewById<TextView>(R.id.tvMemberCount)
+        val llMembersList = view?.findViewById<android.widget.LinearLayout>(R.id.llMembersList)
         val recyclerView = view?.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerViewTargets)
         
         if (targetsList.isNotEmpty()) {
             tvListTitle?.visibility = View.VISIBLE
+            tvMemberCount?.visibility = View.VISIBLE
+            tvMemberCount?.text = "${targetsList.size} 个人"
+            llMembersList?.visibility = View.VISIBLE
             recyclerView?.visibility = View.VISIBLE
             adapter?.notifyDataSetChanged()
         } else {
             tvListTitle?.visibility = View.GONE
+            tvMemberCount?.visibility = View.GONE
+            llMembersList?.visibility = View.GONE
             recyclerView?.visibility = View.GONE
         }
     }

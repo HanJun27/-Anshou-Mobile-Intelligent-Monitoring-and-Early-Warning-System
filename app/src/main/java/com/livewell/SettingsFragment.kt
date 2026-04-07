@@ -8,17 +8,17 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.livewell.untils.PrefsManager
 
 class SettingsFragment : Fragment() {
     
     private lateinit var prefsManager: PrefsManager
-    private lateinit var btnEmergencyContact: MaterialButton
-    private lateinit var btnSmartSettings: MaterialButton
-    private lateinit var btnSettingsGuide: MaterialButton
-    private lateinit var btnFAQ: MaterialButton
+    private lateinit var cardEmergencyContact: MaterialCardView
+    private lateinit var cardSmartSettings: MaterialCardView
+    private lateinit var cardSettingsGuide: MaterialCardView
+    private lateinit var cardFAQ: MaterialCardView
     
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,38 +33,37 @@ class SettingsFragment : Fragment() {
         
         prefsManager = PrefsManager(requireContext())
         
-        btnEmergencyContact = view.findViewById(R.id.btnEmergencyContact)
-        btnSmartSettings = view.findViewById(R.id.btnSmartSettings)
-        btnSettingsGuide = view.findViewById(R.id.btnSettingsGuide)
-        btnFAQ = view.findViewById(R.id.btnFAQ)
+        cardEmergencyContact = view.findViewById(R.id.cardEmergencyContact)
+        cardSmartSettings = view.findViewById(R.id.cardSmartSettings)
+        cardSettingsGuide = view.findViewById(R.id.cardSettingsGuide)
+        cardFAQ = view.findViewById(R.id.cardFAQ)
         
         setupListeners()
     }
     
     private fun setupListeners() {
         // 紧急联系人设置
-        btnEmergencyContact.setOnClickListener {
+        cardEmergencyContact.setOnClickListener {
             (activity as? MainActivity)?.let { mainActivity ->
                 mainActivity.showEmergencyContactSettingsDialogPublic()
             }
         }
         
         // 功能设置
-        btnSmartSettings.setOnClickListener {
-            (activity as? MainActivity)?.let { mainActivity ->
-                mainActivity.showSmartSettingsDialogPublic()
-            }
+        cardSmartSettings.setOnClickListener {
+            val intent = Intent(requireContext(), FunctionSettingsActivity::class.java)
+            startActivity(intent)
         }
         
         // 设置引导
-        btnSettingsGuide.setOnClickListener {
+        cardSettingsGuide.setOnClickListener {
             (activity as? MainActivity)?.let { mainActivity ->
                 mainActivity.showSettingsGuidePublic()
             }
         }
         
         // 问题合集
-        btnFAQ.setOnClickListener {
+        cardFAQ.setOnClickListener {
             showFAQDialog()
         }
     }

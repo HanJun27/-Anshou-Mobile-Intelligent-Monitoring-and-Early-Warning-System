@@ -88,6 +88,12 @@ class GuardianFragment : Fragment() {
         loadData()
     }
     
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // ✅ 清理 Handler，防止内存泄漏和崩溃
+        handler.removeCallbacksAndMessages(null)
+    }
+    
     private fun initViews(view: View) {
         tvGuardianTitle = view.findViewById(R.id.tvGuardianTitle)
         btnManageTargets = view.findViewById(R.id.btnManageTargets)
@@ -266,6 +272,11 @@ class GuardianFragment : Fragment() {
     }
     
     private fun refreshAlerts() {
+        // ✅ 检查 Fragment 是否已附加到 Activity
+        if (!isAdded || context == null) {
+            return
+        }
+        
         swipeRefreshLayout.isRefreshing = true
         
         // ✅ 触发强制邮件检查（立即执行）
@@ -274,6 +285,11 @@ class GuardianFragment : Fragment() {
         // 延迟刷新列表（等待邮件检查完成）
         // ✅ 增加延迟时间到 5 秒，因为 IMAP 连接可能需要时间
         handler.postDelayed({
+            // ✅ 再次检查 Fragment 是否仍然附加
+            if (!isAdded || context == null) {
+                return@postDelayed
+            }
+            
             if (currentTargetId == ALL_TARGETS_ID) {
                 loadAllAlerts()
             } else if (currentTargetId != null) {

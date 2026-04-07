@@ -15,19 +15,36 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="16dp"
             android:gravity="center_vertical"
             android:background="@color/white">
 
-            <TextView
-                android:id="@+id/tvGuardianTitle"
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="守护"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_guardian_shield"
+                    android:tint="@color/primary"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvGuardianTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="守护"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary"
+                    android:letterSpacing="-0.02"/>
+
+            </LinearLayout>
 
             <ImageButton
                 android:id="@+id/btnManageTargets"
@@ -40,49 +57,96 @@
         </LinearLayout>
 
         <!-- 守护对象选择器 -->
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="12dp"
             app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#F5F5F5">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="64dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="12dp">
+                android:paddingHorizontal="16dp">
 
-                <Spinner
-                    android:id="@+id/spinnerGuardianTargets"
+                <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:background="@null"
-                    android:spinnerMode="dropdown"
-                    android:dropDownVerticalOffset="48dp"/>
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="当前守护对象"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_hint"
+                        android:letterSpacing="0.1"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerGuardianTargets"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:background="@null"
+                        android:spinnerMode="dropdown"
+                        android:dropDownVerticalOffset="48dp"/>
+
+                </LinearLayout>
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:src="@drawable/ic_arrow_down"
                     android:contentDescription="下拉选择"
-                    android:scaleType="centerInside"/>
+                    android:scaleType="centerInside"
+                    android:tint="@color/text_hint"/>
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- 刷新按钮和统计信息 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="16dp"
             android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="实时概览"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"/>
+
+                <TextView
+                    android:id="@+id/tvAlertStats"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="共 0 条警报 | 未读 0 条"
+                    android:textColor="@color/text_hint"
+                    android:textSize="14sp"/>
+
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRefresh"
@@ -90,18 +154,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
                 android:text="刷新"
+                android:textSize="13sp"
                 app:icon="@drawable/ic_refresh"
-                app:iconGravity="textStart"/>
+                app:iconSize="16dp"
+                app:iconGravity="textStart"
+                app:cornerRadius="20dp"/>
 
-            <TextView
-                android:id="@+id/tvAlertStats"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="16dp"
-                android:text="共 0 条警报 | 未读 0 条"
-                android:textColor="@color/text_secondary"
-                android:textSize="14sp"/>
         </LinearLayout>
 
         <!-- 分隔线 -->
@@ -148,7 +206,7 @@
             <ImageView
                 android:layout_width="120dp"
                 android:layout_height="120dp"
-                android:src="@drawable/ic_guardian"
+                android:src="@drawable/ic_guardian_shield"
                 android:alpha="0.5"
                 android:contentDescription="无警报"/>
 
@@ -180,9 +238,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="100dp"
+        android:src="@android:drawable/ic_input_add"
         android:contentDescription="配置守护成员"
-        app:tint="@android:color/white"/>
+        app:backgroundTint="@color/primary"
+        app:tint="@android:color/white"
+        app:elevation="8dp"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

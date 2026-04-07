@@ -1,0 +1,893 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="16dp"
+            android:background="#FFFFFF">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_revert"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="返回"
+                app:tint="#AE2F34" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="设置"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#AE2F34"
+                android:layout_marginStart="16dp" />
+        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:clipToPadding="false"
+        android:paddingBottom="32dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- 统计数据区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2"
+                android:layout_marginBottom="32dp">
+
+                <!-- 今日使用时长 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="24dp">
+
+                        <FrameLayout
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_icon_container"
+                            android:layout_marginBottom="12dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_clock_custom" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="今日使用时长"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:textColor="#6C757D"
+                            android:letterSpacing="0.1"
+                            android:layout_marginBottom="4dp" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvAppUsage"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="5.2"
+                                android:textSize="28sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="小时"
+                                android:textSize="14sp"
+                                android:textColor="#9E9E9E"
+                                android:layout_marginStart="4dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 今日步数 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="24dp">
+
+                        <FrameLayout
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_icon_container"
+                            android:layout_marginBottom="12dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_footprints_custom" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="今日步数"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:textColor="#6C757D"
+                            android:letterSpacing="0.1"
+                            android:layout_marginBottom="4dp" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvStepCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="8,432"
+                                android:textSize="28sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="步"
+                                android:textSize="14sp"
+                                android:textColor="#9E9E9E"
+                                android:layout_marginStart="4dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 导航卡片区域 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <!-- 设备使用时长设置 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardUsageSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="20dp"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/bg_icon_container_large"
+                            android:layout_marginEnd="20dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_hourglass_custom" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="设备使用时长设置"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="设置设备使用时长的阈值"
+                                android:textSize="14sp"
+                                android:textColor="#6C757D"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_media_next"
+                            android:rotation="270"
+                            app:tint="#D0D0D0" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 运动监测设置 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardExercise"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="20dp"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/bg_icon_container_large"
+                            android:layout_marginEnd="20dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_activity_custom" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="运动监测设置"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="设置步数的阈值"
+                                android:textSize="14sp"
+                                android:textColor="#6C757D"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_media_next"
+                            android:rotation="270"
+                            app:tint="#D0D0D0" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 睡眠监测设置 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardSleep"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="20dp"
+                        android:gravity="center_vertical">
+
+                        <FrameLayout
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/bg_icon_container_large"
+                            android:layout_marginEnd="20dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_moon_custom" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="睡眠监测设置"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="设置睡眠监测的逻辑以及模式"
+                                android:textSize="14sp"
+                                android:textColor="#6C757D"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_media_next"
+                            android:rotation="270"
+                            app:tint="#D0D0D0" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 自动报警模式 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:backgroundTint="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="32dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="自动报警模式"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="当检测到异常情况时自动通知联系人"
+                                android:textSize="14sp"
+                                android:textColor="#9E9E9E"
+                                android:layout_marginTop="4dp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchAutoAlarm"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+                    </LinearLayout>
+
+                    <!-- 评判标准选择 -->
+                    <RadioGroup
+                        android:id="@+id/radioGroupAlarmMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/radioHybrid"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="混合模式 (时长 + 步数)"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:padding="16dp"
+                            android:button="@null"
+                            android:background="@drawable/bg_radio_option_selector"
+                            android:checked="true" />
+
+                        <RadioButton
+                            android:id="@+id/radioTimeOnly"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="纯使用时长监测"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:padding="16dp"
+                            android:button="@null"
+                            android:background="@drawable/bg_radio_option_selector"
+                            android:layout_marginTop="12dp" />
+
+                        <RadioButton
+                            android:id="@+id/radioStepsOnly"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="纯步数监测"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:padding="16dp"
+                            android:button="@null"
+                            android:background="@drawable/bg_radio_option_selector"
+                            android:layout_marginTop="12dp" />
+                    </RadioGroup>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 警报确认机制和检查时间 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
+
+                <!-- 警报确认机制 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="24dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="24dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="警报确认机制"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchConfirmMechanism"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:padding="16dp"
+                            android:background="#F9F9F9">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="持续时长 (分)"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="#6C757D" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <ImageButton
+                                    android:id="@+id/btnDecreaseDuration"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@drawable/ic_minus"
+                                    android:background="@drawable/bg_counter_button"
+                                    android:contentDescription="减少"
+                                    app:tint="#FF6B6B" />
+
+                                <TextView
+                                    android:id="@+id/tvDuration"
+                                    android:layout_width="40dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="5"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"
+                                    android:gravity="center"
+                                    android:textColor="#191C1D"
+                                    android:layout_marginHorizontal="16dp" />
+
+                                <ImageButton
+                                    android:id="@+id/btnIncreaseDuration"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@android:drawable/ic_menu_add"
+                                    android:background="@drawable/bg_counter_button"
+                                    android:contentDescription="增加"
+                                    app:tint="#FF6B6B" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 每日报警检查时间 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#F5F5F5"
+                    android:backgroundTint="#FFFFFF">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="24dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="每日报警检查时间"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#191C1D"
+                            android:layout_marginBottom="24dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center">
+
+                            <!-- 小时选择器 -->
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <ImageButton
+                                    android:id="@+id/btnHourUp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@android:drawable/arrow_up_float"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="小时增加"
+                                    app:tint="#9E9E9E" />
+
+                                <TextView
+                                    android:id="@+id/tvHour"
+                                    android:layout_width="64dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="20"
+                                    android:textSize="32sp"
+                                    android:textStyle="bold"
+                                    android:gravity="center"
+                                    android:textColor="#191C1D"
+                                    android:background="#F9F9F9"
+                                    android:paddingVertical="12dp"
+                                    android:layout_marginVertical="8dp" />
+
+                                <ImageButton
+                                    android:id="@+id/btnHourDown"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@android:drawable/arrow_down_float"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="小时减少"
+                                    app:tint="#9E9E9E" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text=":"
+                                android:textSize="32sp"
+                                android:textStyle="bold"
+                                android:textColor="#E0E0E0"
+                                android:layout_marginHorizontal="24dp" />
+
+                            <!-- 分钟选择器 -->
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center">
+
+                                <ImageButton
+                                    android:id="@+id/btnMinuteUp"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@android:drawable/arrow_up_float"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="分钟增加"
+                                    app:tint="#9E9E9E" />
+
+                                <TextView
+                                    android:id="@+id/tvMinute"
+                                    android:layout_width="64dp"
+                                    android:layout_height="wrap_content"
+                                    android:text="30"
+                                    android:textSize="32sp"
+                                    android:textStyle="bold"
+                                    android:gravity="center"
+                                    android:textColor="#191C1D"
+                                    android:background="#F9F9F9"
+                                    android:paddingVertical="12dp"
+                                    android:layout_marginVertical="8dp" />
+
+                                <ImageButton
+                                    android:id="@+id/btnMinuteDown"
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:src="@android:drawable/arrow_down_float"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="分钟减少"
+                                    app:tint="#9E9E9E" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 后台保活增强 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:backgroundTint="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="32dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="32dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="后台保活增强"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D"
+                                android:layout_marginBottom="8dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="开启无声音乐播放，保持音频通路活跃，防止系统清理应用。"
+                                android:textSize="14sp"
+                                android:textColor="#9E9E9E"
+                                android:lineSpacingExtra="4dp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchSilentMusic"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 终极保活模式 -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:backgroundTint="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="32dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="32dp">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="8dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="终极保活模式"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#191C1D" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Pro"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FF6B6B"
+                                    android:background="#FFF0F0"
+                                    android:paddingHorizontal="8dp"
+                                    android:paddingVertical="2dp"
+                                    android:layout_marginStart="8dp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="开启后台保活增强功能，确保传感器在锁屏状态下依然能够精准实时监测数据，防止系统自动清理应用。"
+                                android:textSize="14sp"
+                                android:textColor="#9E9E9E"
+                                android:lineSpacingExtra="4dp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchProMode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="#F9F9F9"
+                        android:padding="16dp"
+                        android:layout_marginTop="24dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@android:drawable/ic_dialog_info"
+                            app:tint="#9E9E9E"
+                            android:layout_marginEnd="12dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="开启此项可能会增加 2-5% 的每日电池消耗，但能显著提升预警触发的及时性。"
+                            android:textSize="12sp"
+                            android:textColor="#9E9E9E" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

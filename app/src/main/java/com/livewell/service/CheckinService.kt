@@ -265,7 +265,10 @@ private fun buildAlertReason(): String {
 
 // 修改 performSafetyCheck() 方法
 private fun performSafetyCheck() {
+    Log.i(tag, "====== 开始安全检查 ======")
+    
     if (prefsManager.isTestMode()) {
+        Log.i(tag, "测试模式，执行测试检查")
         performTestCheck()
         return
     }
@@ -287,8 +290,19 @@ private fun performSafetyCheck() {
         false
     }
     
+    Log.i(tag, "检查结果：")
+    Log.i(tag, "  - 今日日期：$today")
+    Log.i(tag, "  - 最后签到：$lastCheckin")
+    Log.i(tag, "  - 今日使用：${todayUsage}分钟（阈值：${usageThreshold}分钟）")
+    Log.i(tag, "  - 今日步数：${stepCount}步（阈值：${stepThreshold}步）")
+    Log.i(tag, "  - 使用异常：$usageAbnormal")
+    Log.i(tag, "  - 步数异常：$stepAbnormal")
+    Log.i(tag, "  - 自动报警模式：${prefsManager.isAutoAlertModeEnabled()}")
+    Log.i(tag, "  - 需要确认：${prefsManager.isAlertConfirmEnabled()}")
+    
     // ✅ 自动报警模式逻辑
     if (prefsManager.isAutoAlertModeEnabled()) {
+        Log.i(tag, "进入自动报警模式处理")
         handleAutoAlertMode(usageAbnormal, stepAbnormal)
         return
     }
@@ -299,13 +313,20 @@ private fun performSafetyCheck() {
         return
     }
     
+    Log.i(tag, "用户今日未签到，继续检查...")
+    
     // 未签到，检查是否有任何异常
     if (usageAbnormal || stepAbnormal) {
+        Log.i(tag, "检测到异常，准备触发警报")
         if (prefsManager.isAlertConfirmEnabled()) {
+            Log.i(tag, "需要确认，发送确认通知")
             sendConfirmNotification()
         } else {
+            Log.i(tag, "直接触发警报")
             triggerAlert()
         }
+    } else {
+        Log.i(tag, "使用时长和步数均正常，不触发警报")
     }
 }
 
@@ -412,20 +433,31 @@ private fun sendEmailAlert() {
     val port = securePrefs.getSmtpPort() ?: prefsManager.getEmailSmtpPort()
     val toEmail = prefsManager.getEmailTo()
     
-    Log.i(tag, "发件邮箱配置：${if (fromEmail.isNullOrEmpty()) "❌ 为空" else "✅ 已配置"}")
-    Log.i(tag, "授权码配置：${if (authCode.isNullOrEmpty()) "❌ 为空" else "✅ 已配置"}")
+    Log.i(tag, "发件邮箱配置：${if (fromEmail.isNullOrEmpty()) "❌ 为空" else "✅ 已配置 ($fromEmail)"}")
+    Log.i(tag, "授权码配置：${if (authCode.isNullOrEmpty()) "❌ 为空" else "✅ 已配置 (${authCode.take(4)}...)"}")
+    Log.i(tag, "SMTP 主机：$host")
+    Log.i(tag, "SMTP 端口：$port")
+    Log.i(tag, "收件邮箱：${if (toEmail.isNullOrEmpty()) "❌ 为空" else "✅ 已配置 ($toEmail)"}")
     
     if (fromEmail.isNullOrEmpty() || authCode.isNullOrEmpty() || toEmail.isNullOrEmpty()) {
-        Log.e(tag, "邮件配置不完整")
+        Log.e(tag, "❌ 邮件配置不完整，无法发送邮件")
+        Log.e(tag, "fromEmail 为空：${fromEmail.isNullOrEmpty()}")
+        Log.e(tag, "authCode 为空：${authCode.isNullOrEmpty()}")
+        Log.e(tag, "toEmail 为空：${toEmail.isNullOrEmpty()}")
         sendAlertNotification()
         return
     }
+    
+    Log.i(tag, "✅ 邮件配置完整，开始发送邮件...")
     
     val mailSender = MailSender()
     // 构建完整的警报内容：用户自定义消息 + 步数和使用时长信息
     val userMessage = prefsManager.getAlertMessage()
     val additionalInfo = generateGuardianStatusInfo()
     val fullContent = buildFullAlertContent(userMessage, additionalInfo)
+    
+    Log.i(tag, "邮件主题：【安守】紧急警报")
+    Log.i(tag, "邮件内容长度：${fullContent.length} 字符")
     
     mailSender.sendEmail(
         host = host,
@@ -437,13 +469,13 @@ private fun sendEmailAlert() {
         content = fullContent,
         callback = object : MailSender.SendCallback {
             override fun onSuccess() {
-                Log.i(tag, "警报邮件发送成功")
+                Log.i(tag, "✅ 警报邮件发送成功")
                 updateLastEmailRecordStatus(AlertStatus.SUCCESS)
                 sendAlertNotification()
             }
             
             override fun onError(error: String) {
-                Log.e(tag, "邮件发送失败：$error")
+                Log.e(tag, "❌ 邮件发送失败：$error")
                 updateLastEmailRecordStatus(AlertStatus.FAILED)
                 trySmsFallback()
             }

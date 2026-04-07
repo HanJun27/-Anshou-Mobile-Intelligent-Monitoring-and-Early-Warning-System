@@ -6,10 +6,13 @@
     android:background="@color/background"
     android:fillViewport="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp">
 
         <!-- 标题 -->
         <TextView
@@ -17,77 +20,308 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="设置"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginTop="8dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            android:textColor="@color/primary"
+            android:letterSpacing="-0.02"
+            android:layout_marginBottom="24dp"/>
 
-        <!-- 紧急联系人设置按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnEmergencyContact"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="16dp"
-            android:text="紧急联系人设置"
-            app:icon="@drawable/ic_settings"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            app:iconGravity="textStart"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSettingsTitle"/>
-
-        <!-- 功能设置按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSmartSettings"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="12dp"
-            android:text="功能设置"
-            app:icon="@drawable/ic_settings"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            app:iconGravity="textStart"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnEmergencyContact"/>
-
-        <!-- 设置引导按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSettingsGuide"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="12dp"
-            android:text="设置引导"
-            app:icon="@drawable/ic_settings"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            app:iconGravity="textStart"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnSmartSettings"/>
-
-        <!-- 问题合集按钮 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFAQ"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="12dp"
-            android:text="问题合集"
-            app:icon="@drawable/ic_alert"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            app:iconGravity="textStart"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnSettingsGuide"/>
-
-        <!-- 底部留白 -->
-        <Space
+        <!-- 状态卡片 -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
-            android:layout_height="16dp"
-            app:layout_constraintTop_toBottomOf="@id/btnSettingsGuide"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#F5F5F5"
+            android:layout_marginBottom="24dp">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="24dp">
+
+                <FrameLayout
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_menu_item_icon">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_guardian_shield"
+                        android:tint="@color/primary"/>
+
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="账号保护中"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="LiveWell 为您的安全保驾护航"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 菜单项列表 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 紧急联系人设置 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEmergencyContact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_menu_item_icon">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_settings"
+                            android:tint="@color/primary"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="紧急联系人设置"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginStart="16dp"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_more"
+                        android:tint="#E0BFBD"
+                        android:rotation="270"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 功能设置 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSmartSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_menu_item_icon">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_settings"
+                            android:tint="@color/primary"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="功能设置"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginStart="16dp"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_more"
+                        android:tint="#E0BFBD"
+                        android:rotation="270"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 设置引导 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSettingsGuide"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_menu_item_icon">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_settings"
+                            android:tint="@color/primary"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="设置引导"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginStart="16dp"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_more"
+                        android:tint="#E0BFBD"
+                        android:rotation="270"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 问题合集 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardFAQ"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#F5F5F5"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_faq_icon">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@android:drawable/ic_dialog_alert"
+                            android:tint="#BA1A1A"/>
+
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="问题合集"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginStart="16dp"/>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_more"
+                        android:tint="#E0BFBD"
+                        android:rotation="270"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </ScrollView>

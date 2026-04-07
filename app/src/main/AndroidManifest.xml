@@ -88,6 +88,12 @@
             android:exported="false"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
         
+        <!-- 功能设置 Activity -->
+        <activity
+            android:name=".FunctionSettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LiveWell"/>
+        
         <!-- ========== Service ========== -->
         <service
             android:name=".service.CheckinService"

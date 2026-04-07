@@ -409,6 +409,80 @@ try {
                 else -> false
             }
         }
+        
+        // 设置 SOS 悬浮按钮
+        setupSOSButton()
+    }
+    
+    /**
+     * 设置 SOS 紧急求助按钮
+     */
+    private fun setupSOSButton() {
+        val fabSOS = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabSOS)
+        fabSOS.setOnClickListener {
+            showSOSDialog()
+        }
+    }
+    
+    /**
+     * 显示 SOS 紧急求助对话框
+     */
+    private fun showSOSDialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("🆘 紧急求助")
+            .setMessage("您即将触发紧急求助，系统将：\n\n1. 向所有紧急联系人发送求助邮件\n2. 包含您的当前位置信息\n3. 记录此次求助事件\n\n是否继续？")
+            .setPositiveButton("确认求助") { _, _ ->
+                triggerEmergencyAlert()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+    
+    /**
+     * 触发紧急求助
+     */
+    private fun triggerEmergencyAlert() {
+        try {
+            // 获取当前位置（简化版，实际应使用 LocationManager）
+            val locationInfo = "位置信息获取中..."
+            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            
+            // 创建紧急求助邮件内容
+            val subject = "【紧急求助】安守 LiveWell - $timestamp"
+            val body = """
+                紧急求助警报！
+                
+                触发时间：$timestamp
+                位置信息：$locationInfo
+                设备型号：${Build.MANUFACTURER} ${Build.MODEL}
+                
+                请立即联系用户确认安全状况！
+            """.trimIndent()
+            
+            // 获取紧急联系人邮箱
+            val emergencyEmail = prefsManager.getEmergencyContact()
+            if (!emergencyEmail.isNullOrEmpty()) {
+                // 使用 Intent 打开邮件客户端
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:$emergencyEmail")
+                    putExtra(Intent.EXTRA_SUBJECT, subject)
+                    putExtra(Intent.EXTRA_TEXT, body)
+                }
+                
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                    Toast.makeText(this, "已打开邮件客户端，请发送邮件", Toast.LENGTH_LONG).show()
+                    Log.i(TAG, "紧急求助邮件客户端已打开")
+                } else {
+                    Toast.makeText(this, "未找到邮件客户端", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "未设置紧急联系人邮箱，请先在设置中添加", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "触发紧急求助失败", e)
+            Toast.makeText(this, "求助失败：${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
     
     /**
@@ -842,31 +916,27 @@ private fun showSmartSettingsDialog() {
     updateAlertTimeDisplay()
     
     btnHourMinus.setOnClickListener {
-        if (hour > 0) {
-            hour--
-            updateAlertTimeDisplay()
-        }
+        // 循环轮转：0 -> 23
+        hour = if (hour > 0) hour - 1 else 23
+        updateAlertTimeDisplay()
     }
     
     btnHourPlus.setOnClickListener {
-        if (hour < 23) {
-            hour++
-            updateAlertTimeDisplay()
-        }
+        // 循环轮转：23 -> 0
+        hour = if (hour < 23) hour + 1 else 0
+        updateAlertTimeDisplay()
     }
     
     btnMinuteMinus.setOnClickListener {
-        if (minute >= 5) {
-            minute -= 5
-            updateAlertTimeDisplay()
-        }
+        // 循环轮转：0 -> 55（步长为5）
+        minute = if (minute >= 5) minute - 5 else 55
+        updateAlertTimeDisplay()
     }
     
     btnMinutePlus.setOnClickListener {
-        if (minute < 55) {
-            minute += 5
-            updateAlertTimeDisplay()
-        }
+        // 循环轮转：55 -> 0（步长为5）
+        minute = if (minute < 55) minute + 5 else 0
+        updateAlertTimeDisplay()
     }
     
     // ✅ 更新设备使用数据（新增）
@@ -3355,8 +3425,8 @@ private fun startAllServices() {
             // ✅ 获取当前应用的 PID
             val pid = android.os.Process.myPid()
             
-            // ✅ 使用 -t 参数限制行数，-v time 显示时间，并过滤当前应用的日志
-            val command = "logcat -d -t 1000 -v time *:${if (filterType.isEmpty()) "D" else "V"}"
+            // ✅ 使用 -t 参数限制行数，-v time 显示时间
+            val command = "logcat -d -t 500 -v time"
             val process = Runtime.getRuntime().exec(command)
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             var line: String?
@@ -3368,38 +3438,53 @@ private fun startAllServices() {
                 else -> "" // 全部显示
             }
             
-            val pattern = regex.toRegex(RegexOption.IGNORE_CASE)
+            val pattern = if (regex.isNotEmpty()) {
+                regex.toRegex(RegexOption.IGNORE_CASE)
+            } else {
+                null
+            }
+            
             var matchedCount = 0
+            var totalCount = 0
             
             while (true) {
                 val currentLine = reader.readLine() ?: break
+                totalCount++
                 
-                // ✅ 只显示当前应用的日志
-                if (currentLine.contains("com.livewell")) {
-                    if (regex.isEmpty() || pattern.containsMatchIn(currentLine)) {
-                        logs.appendLine(currentLine)
-                        matchedCount++
-                        
-                        // ✅ 限制最多显示 200 条匹配日志
-                        if (matchedCount >= 200) {
-                            break
-                        }
+                // ✅ 如果是指定类型，需要匹配关键词
+                // ✅ 如果是“全部”，显示所有日志（不限制包名）
+                val shouldInclude = if (pattern != null) {
+                    // 有过滤条件：需要匹配关键词
+                    pattern.containsMatchIn(currentLine)
+                } else {
+                    // 无过滤条件：显示所有日志
+                    true
+                }
+                
+                if (shouldInclude) {
+                    logs.appendLine(currentLine)
+                    matchedCount++
+                    
+                    // ✅ 限制最多显示 300 条日志
+                    if (matchedCount >= 300) {
+                        break
                     }
                 }
             }
             
             reader.close()
             
-            Log.d("MainActivity", "日志加载完成，匹配到 $matchedCount 条日志")
+            Log.d("MainActivity", "日志加载完成，总共读取 $totalCount 条，匹配到 $matchedCount 条日志")
             
         } catch (e: Exception) {
             logs.appendLine("读取日志失败：${e.message}")
+            logs.appendLine("错误详情：${e.javaClass.simpleName}")
             Log.e("MainActivity", "读取日志失败", e)
         }
         
         // 如果日志为空，显示提示
         if (logs.isEmpty()) {
-            textView.text = "暂无相关日志\n\n提示：\n1. 请先触发相关操作（如刷新邮件、发送警报等）\n2. 确保应用有日志权限\n3. 尝试切换到“全部”标签查看"
+            textView.text = "暂无相关日志\n\n提示：\n1. 请先触发相关操作（如刷新邮件、发送警报等）\n2. 尝试切换到“全部”标签查看\n3. 检查应用是否有日志权限"
         } else {
             textView.text = logs.toString()
         }

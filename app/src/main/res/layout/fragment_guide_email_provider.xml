@@ -1,106 +1,435 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#F8F9FA">
 
-    <LinearLayout
+    <!-- Header - 采用模式选择界面的设计 -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:padding="16dp"
+        android:background="#FFFFFF">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_logo"
+                android:tint="#ff6b6b"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LiveWell"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#ff6b6b"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="发件人邮箱配置"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            android:layout_marginBottom="16dp"/>
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="设置引导"
+            android:textColor="#94A3B8"
+            android:textSize="14sp"/>
+    </RelativeLayout>
 
-        <TextView
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="请选择您的邮箱服务商并配置发件人信息"
-            android:textSize="15sp"
-            android:textColor="@color/text_secondary"
-            android:layout_marginBottom="24dp"/>
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
-
+            <!-- Hero Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:layout_marginBottom="32dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="选择邮箱服务商"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="16dp"/>
+                    android:text="发件人邮箱配置"
+                    android:textColor="#ff6b6b"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
 
-                <RadioGroup
-                    android:id="@+id/radioGroupProvider"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="请选择您的邮箱服务商并配置发件人信息，以确保安全通知能及时送达。"
+                    android:textColor="#64748B"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <!-- Configuration Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginBottom="16dp">
+                    android:padding="32dp">
 
-                    <RadioButton
-                        android:id="@+id/radioQQ"
+                    <!-- Card Header -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="QQ 邮箱"
-                        android:textSize="16sp"
-                        android:checked="true"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="32dp">
 
-                    <RadioButton
-                        android:id="@+id/radio163"
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:src="@drawable/ic_mail"
+                            android:padding="10dp"
+                            android:background="@drawable/bg_icon_container_red"
+                            app:tint="#ff6b6b" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="选择邮箱服务商"
+                            android:textColor="#1E293B"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- RadioGroup for Email Providers -->
+                    <RadioGroup
+                        android:id="@+id/radioGroupProvider"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="网易 163 邮箱"
-                        android:textSize="16sp"/>
+                        android:orientation="vertical"
+                        android:layout_marginBottom="40dp">
 
-                </RadioGroup>
+                        <!-- QQ Mail Option -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardQQ"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            app:cardBackgroundColor="#F8FAFC"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="2dp"
+                            app:strokeColor="#ff6b6b33"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
 
-                <Button
-                    android:id="@+id/btnQQConfig"
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:padding="20dp">
+
+                                <TextView
+                                    android:layout_width="48dp"
+                                    android:layout_height="48dp"
+                                    android:text="Q"
+                                    android:textColor="#3B82F6"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold|italic"
+                                    android:gravity="center"
+                                    android:background="@drawable/bg_brand_icon"
+                                    android:layout_marginEnd="16dp"/>
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="QQ 邮箱"
+                                    android:textColor="#334155"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+
+                                <RadioButton
+                                    android:id="@+id/radioQQ"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:checked="true"
+                                    android:clickable="false"
+                                    android:focusable="false" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- 163 Mail Option -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/card163"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:cardBackgroundColor="#FFFFFF"
+                            app:cardCornerRadius="20dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="2dp"
+                            app:strokeColor="#CBD5E1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:padding="20dp">
+
+                                <TextView
+                                    android:layout_width="48dp"
+                                    android:layout_height="48dp"
+                                    android:text="163"
+                                    android:textColor="#EF4444"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold"
+                                    android:gravity="center"
+                                    android:background="@drawable/bg_brand_icon"
+                                    android:layout_marginEnd="16dp"/>
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="163 网易邮箱"
+                                    android:textColor="#334155"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+
+                                <RadioButton
+                                    android:id="@+id/radio163"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:checked="false"
+                                    android:clickable="false"
+                                    android:focusable="false" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+                    </RadioGroup>
+
+                    <!-- Action Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:spacing="16dp">
+
+                        <Button
+                            android:id="@+id/btnQQConfig"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:text="配置 QQ 邮箱"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:backgroundTint="#ff6b6b"
+                            app:cornerRadius="20dp"
+                            android:layout_marginBottom="16dp" />
+
+                        <Button
+                            android:id="@+id/btn163Config"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:text="配置 163 邮箱"
+                            android:textColor="#FFFFFF"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:backgroundTint="#ff6b6b"
+                            app:cornerRadius="20dp"
+                            android:visibility="gone"
+                            android:layout_marginBottom="16dp" />
+
+                        <Button
+                            android:id="@+id/btnTestSend"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="发送测试邮件"
+                            android:textColor="#ff6b6b"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            app:icon="@drawable/ic_send"
+                            app:iconTint="#ff6b6b" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Help Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="48dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="配置指南 &amp; 帮助"
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.2"
+                    android:layout_marginBottom="24dp" />
+
+                <!-- Help Card 1 -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="配置 QQ 邮箱"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="#FFE5E5"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="1dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#FFFFFF"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
 
-                <Button
-                    android:id="@+id/btn163Config"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="24dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="16dp">
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_help_outline"
+                                android:padding="12dp"
+                                android:background="@drawable/bg_help_icon"
+                                app:tint="#ff6b6b" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_open_in_new"
+                                app:tint="#CBD5E1" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="什么是 SMTP 服务？"
+                            android:textColor="#1E293B"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="了解如何启用第三方邮件发送授权，确保安全提醒正常发出。"
+                            android:textColor="#64748B"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Help Card 2 -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="配置 163 邮箱"
-                    style="@style/Widget.Material3.Button.OutlinedButton"/>
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#FFE5E5"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="1dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#FFFFFF"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="24dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="16dp">
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_key"
+                                android:padding="12dp"
+                                android:background="@drawable/bg_help_icon"
+                                app:tint="#ff6b6b" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_weight="1" />
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_open_in_new"
+                                app:tint="#CBD5E1" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="如何获取授权码？"
+                            android:textColor="#1E293B"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="获取 QQ 或 163 邮箱的专用 App 授权码，保护您的主密码安全。"
+                            android:textColor="#64748B"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </ScrollView>
 
-        <Button
-            android:id="@+id/btnTestSend"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="发送测试邮件"
-            style="@style/Widget.Material3.Button"/>
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

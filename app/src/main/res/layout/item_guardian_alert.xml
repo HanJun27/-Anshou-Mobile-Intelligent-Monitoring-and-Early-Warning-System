@@ -3,9 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#F5F5F5"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
@@ -14,15 +16,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="20dp">
 
         <!-- 警报类型图标 -->
-        <ImageView
-            android:id="@+id/ivAlertType"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_alert"
-            android:contentDescription="警报类型"/>
+        <FrameLayout
+            android:id="@+id/flAlertIcon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_emergency_icon">
+
+            <ImageView
+                android:id="@+id/ivAlertType"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_dialog_alert"
+                android:tint="@color/primary"
+                android:contentDescription="警报类型"/>
+
+        </FrameLayout>
 
         <!-- 警报信息 -->
         <LinearLayout
@@ -45,7 +57,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="紧急警报"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary"
                     android:maxLines="1"
@@ -55,19 +67,21 @@
                     android:id="@+id/viewUnreadDot"
                     android:layout_width="8dp"
                     android:layout_height="8dp"
+                    android:layout_marginStart="8dp"
                     android:background="@drawable/bg_unread_dot"
                     android:visibility="gone"/>
-            </LinearLayout>
 
-            <!-- 时间戳 -->
-            <TextView
-                android:id="@+id/tvTimestamp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="2024-01-01 12:00"
-                android:textSize="12sp"
-                android:textColor="@color/text_hint"/>
+                <TextView
+                    android:id="@+id/tvTimestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="02-14 10:30"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_hint"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
 
             <!-- 摘要信息 -->
             <TextView
@@ -75,9 +89,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="步数：100 | 使用：30 分钟"
-                android:textSize="13sp"
+                android:text="收到紧急求助信号，请立即确认被守护人安全状态。"
+                android:textSize="14sp"
                 android:textColor="@color/text_secondary"
+                android:lineSpacingMultiplier="1.4"
                 android:maxLines="2"
                 android:ellipsize="end"/>
 
@@ -85,45 +100,35 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
+                android:layout_marginTop="16dp"
+                android:paddingTop="16dp"
+                android:orientation="horizontal"
+                android:background="@null">
 
                 <TextView
                     android:id="@+id/tvStepCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_data_tag"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:text="100 步"
+                    android:text="步数：120"
                     android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginEnd="8dp"
+                    android:textColor="@color/text_hint"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="24dp"
                     android:visibility="gone"/>
 
                 <TextView
                     android:id="@+id/tvUsageMinutes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_data_tag"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:text="30 分钟"
+                    android:text="使用：45分钟"
                     android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/text_hint"
+                    android:textStyle="bold"
                     android:visibility="gone"/>
 
             </LinearLayout>
 
         </LinearLayout>
-
-        <!-- 箭头图标 -->
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_arrow_right"
-            android:contentDescription="查看详情"
-            app:tint="@color/text_hint"/>
 
     </LinearLayout>
 

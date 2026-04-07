@@ -3,8 +3,9 @@
     <color name="primary">#FF6B6B</color>
     <color name="primary_dark">#FF5252</color>
     <color name="primary_light">#FFE5E5</color>
-    <color name="background">#F8F9FA</color>
+    <color name="background">#F4F5F6</color>
     <color name="surface">#FFFFFF</color>
+    <color name="on_surface">#212529</color>
     <color name="text_primary">#212529</color>
     <color name="text_secondary">#6C757D</color>
     <color name="text_hint">#9E9E9E</color>

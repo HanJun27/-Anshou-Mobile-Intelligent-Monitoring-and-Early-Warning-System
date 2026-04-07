@@ -4,77 +4,234 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:background="#F8F9FA">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="添加被守护人"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_primary"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="配置需要接收警报的邮箱地址和授权码"
-        android:textSize="14sp"
-        android:textColor="@color/text_secondary"/>
-
-    <!-- 添加按钮 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnAddTarget"
+    <!-- Header - 采用模式选择界面的设计 -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="添加被守护人"
-        android:textAllCaps="false"
-        app:icon="@drawable/ic_add"
-        app:iconGravity="textStart"/>
+        android:padding="16dp"
+        android:background="#FFFFFF">
 
-    <!-- 提示文本 -->
-    <TextView
-        android:id="@+id/tvHint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="后续您可以在：\n主页下方导航栏 - 守护按钮 - 左下角 + 号按钮\n或\n右上角设置界面 - 添加被守护人"
-        android:textSize="13sp"
-        android:textColor="@color/text_hint"
-        android:lineSpacingExtra="4dp"/>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_logo"
+                android:tint="#ff6b6b"/>
 
-    <!-- 已添加的被守护人列表标题 -->
-    <TextView
-        android:id="@+id/tvListTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="已添加的被守护人"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_primary"
-        android:visibility="gone"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LiveWell"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#ff6b6b"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
 
-    <!-- 被守护人列表 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewTargets"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="设置引导"
+            android:textColor="#94A3B8"
+            android:textSize="14sp"/>
+    </RelativeLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="12dp"
-        android:clipToPadding="false"
-        android:overScrollMode="ifContentScrolls"
-        android:visibility="gone"/>
+        android:layout_weight="1">
 
-    <!-- 跳过按钮 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSkip"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="稍后再说"
-        android:textAllCaps="false"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Hero Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="32dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="添加被守护人"
+                    android:textColor="#191C1D"
+                    android:textSize="40sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:lineSpacingExtra="4dp"
+                    android:text="您可以添加需要保护的家人或朋友。添加后，您可以随时在“设置 > 成员管理”中更新这些信息。"
+                    android:textColor="#584140"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <!-- Add Member Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:id="@+id/btnAddTarget"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="40dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:src="@drawable/ic_add"
+                        app:backgroundTint="#ff6b6b"
+                        app:fabSize="normal"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="添加成员"
+                        android:textColor="#191C1D"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Members List -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="#F3F4F5"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:id="@+id/tvListTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="已添加的成员"
+                        android:textAllCaps="true"
+                        android:textColor="#584140"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvMemberCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:background="@drawable/bg_badge"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
+                        android:text="0 个人"
+                        android:textColor="#584140"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </RelativeLayout>
+
+                <!-- 被守护人列表 -->
+                <LinearLayout
+                    android:id="@+id/llMembersList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewTargets"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:clipToPadding="false"
+                        android:overScrollMode="never" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Info Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@android:color/white"
+                android:orientation="horizontal"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="2dp"
+                    android:src="@drawable/ic_info"
+                    app:tint="#ff6b6b" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="为什么要添加被守护人？"
+                        android:textColor="#191C1D"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:lineSpacingExtra="2dp"
+                        android:text="当系统检测到您的异常状态（如长时间未移动或紧急求助）时，安守将第一时间通知这些联系人，并分享您的实时位置，为您提供全天候的守护网络。"
+                        android:textColor="#584140"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Hint Text -->
+            <TextView
+                android:id="@+id/tvHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="后续您可以在：\n主页下方导航栏 - 守护按钮 - 左下角 + 号按钮\n或\n右上角设置界面 - 添加被守护人"
+                android:textSize="13sp"
+                android:textColor="#584140"
+                android:lineSpacingExtra="4dp" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

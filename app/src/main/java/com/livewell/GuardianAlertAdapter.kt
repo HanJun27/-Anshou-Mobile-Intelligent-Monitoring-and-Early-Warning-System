@@ -3,6 +3,7 @@ package com.livewell
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +17,7 @@ class GuardianAlertAdapter(
 ) : RecyclerView.Adapter<GuardianAlertAdapter.ViewHolder>() {
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val flAlertIcon: FrameLayout = itemView.findViewById(R.id.flAlertIcon)
         val ivAlertType: ImageView = itemView.findViewById(R.id.ivAlertType)
         val tvAlertTitle: TextView = itemView.findViewById(R.id.tvAlertTitle)
         val tvTimestamp: TextView = itemView.findViewById(R.id.tvTimestamp)
@@ -37,15 +39,21 @@ class GuardianAlertAdapter(
         // 设置警报类型图标和标题
         when (alert.alertType) {
             "emergency" -> {
-                holder.ivAlertType.setImageResource(R.drawable.ic_alert)
+                holder.flAlertIcon.setBackgroundResource(R.drawable.bg_emergency_icon)
+                holder.ivAlertType.setImageResource(android.R.drawable.ic_dialog_alert)
+                holder.ivAlertType.setColorFilter(holder.itemView.context.getColor(R.color.primary))
                 holder.tvAlertTitle.text = "紧急警报"
             }
             "sleep" -> {
-                holder.ivAlertType.setImageResource(R.drawable.ic_sleep)
+                holder.flAlertIcon.setBackgroundResource(R.drawable.bg_sleep_icon)
+                holder.ivAlertType.setImageResource(android.R.drawable.ic_menu_recent_history)
+                holder.ivAlertType.setColorFilter(holder.itemView.context.getColor(android.R.color.holo_purple))
                 holder.tvAlertTitle.text = "睡眠监测"
             }
             else -> {
-                holder.ivAlertType.setImageResource(R.drawable.ic_alert)
+                holder.flAlertIcon.setBackgroundResource(R.drawable.bg_emergency_icon)
+                holder.ivAlertType.setImageResource(android.R.drawable.ic_dialog_alert)
+                holder.ivAlertType.setColorFilter(holder.itemView.context.getColor(R.color.primary))
                 holder.tvAlertTitle.text = "未知警报"
             }
         }
@@ -55,14 +63,14 @@ class GuardianAlertAdapter(
             .format(Date(alert.timestamp))
         
         // 摘要信息
-        holder.tvSummary.text = alert.getSummary()
+        holder.tvSummary.text = alert.userMessage.ifEmpty { alert.content.take(50) }
         
         // 步数和使用时长（始终显示）
         holder.tvStepCount.visibility = View.VISIBLE
-        holder.tvStepCount.text = "${alert.stepCount}步"
+        holder.tvStepCount.text = "步数：${alert.stepCount}"
         
         holder.tvUsageMinutes.visibility = View.VISIBLE
-        holder.tvUsageMinutes.text = "${alert.usageMinutes}分钟"
+        holder.tvUsageMinutes.text = "使用：${alert.usageMinutes}分钟"
         
         // 未读标记
         holder.viewUnreadDot.visibility = if (!alert.isRead) View.VISIBLE else View.GONE
