@@ -2,6 +2,7 @@ package com.livewell
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -120,7 +121,14 @@ class HomeFragment : Fragment() {
     
     private fun performCheckin() {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        
+        // ✅ 保存签到日期和时间
+        prefsManager.saveLastCheckinDate(today)
         prefsManager.saveCheckinTime(System.currentTimeMillis())
+        
+        android.util.Log.i("HomeFragment", "====== 签到成功 ======")
+        android.util.Log.i("HomeFragment", "签到日期：$today")
+        android.util.Log.i("HomeFragment", "签到时间：${System.currentTimeMillis()}")
         
         tvCheckinStatus.text = "今日已完成签到"
         tvCheckinStatus.setTextColor(requireContext().getColor(R.color.success))
@@ -170,6 +178,11 @@ class HomeFragment : Fragment() {
         // 更新签到状态
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val lastCheckin = prefsManager.getLastCheckinDate()
+        
+        Log.d("HomeFragment", "====== 签到状态检查 ======")
+        Log.d("HomeFragment", "今日日期：$today")
+        Log.d("HomeFragment", "最后签到：${lastCheckin ?: "null"}")
+        Log.d("HomeFragment", "是否匹配：${today == lastCheckin}")
         
         if (today == lastCheckin) {
             tvCheckinStatus.text = "今日已完成签到"

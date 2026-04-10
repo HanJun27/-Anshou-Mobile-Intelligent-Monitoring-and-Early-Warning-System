@@ -1,59 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 
+  Guardian Mode Selector Layout
+  This XML file provides an Android-style layout representation of the Guardian Mode selection screen.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="#F4F4F5">
 
-    <!-- Header -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <!-- Header Section -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
         android:background="@android:color/white"
-        android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:title="选择应用工作模式"
+            app:titleTextColor="#18181B">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_shield_heart"
-                app:tint="#AE2F34" />
-
-            <TextView
+            <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:fontFamily="sans-serif-black"
-                android:text="LiveWell"
-                android:textColor="#AE2F34"
-                android:textSize="20sp" />
-        </LinearLayout>
+                android:layout_gravity="end"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_more_vert"
+                android:padding="12dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginEnd="16dp"
-            android:text="跳过"
-            android:textAllCaps="true"
-            android:textColor="#808080"
-            android:textSize="14sp"
-            android:textStyle="bold" />
-    </androidx.appcompat.widget.Toolbar>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_nav"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+        app:layout_constraintBottom_toTopOf="@+id/footerActions"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -64,277 +53,247 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="添加被守护人"
-                android:textColor="#191C1D"
-                android:textSize="40sp"
-                android:textStyle="bold" />
+                android:text="请根据您的当前环境和安全需求选择合适的工作模式。守护者系统将实时调整防护策略。"
+                android:textColor="#71717A"
+                android:textSize="15sp"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="24dp" />
 
-            <TextView
+            <!-- Mode Cards Container -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:lineSpacingExtra="4dp"
-                android:text="您可以添加需要保护的家人或朋友。添加后，您可以随时在“设置 > 成员管理”中更新这些信息。"
-                android:textColor="#584140"
-                android:textSize="18sp" />
+                android:orientation="vertical">
 
-            <!-- Add Member Card -->
+                <!-- Mode Card: Protected -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp"
+                    app:cardBackgroundColor="#F9F9F9">
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="20dp">
+                        
+                        <View
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_icon_red_light" />
+                            
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="16dp"
+                            android:orientation="vertical">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="被守护模式"
+                                android:textStyle="bold"
+                                android:textColor="#18181B"
+                                android:textSize="18sp" />
+                                
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="监测本机用户状态，失能时发送警报给紧急联系人。"
+                                android:textColor="#71717A"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ... Repeat for other modes ... -->
+
+                <!-- Selected Mode Card: Community -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="#F87171"
+                    app:cardBackgroundColor="#FEF2F2">
+                    
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="20dp">
+                        
+                        <View
+                            android:id="@+id/iconBg"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_icon_red_light"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                            
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            android:orientation="vertical"
+                            app:layout_constraintEnd_toStartOf="@+id/checkIcon"
+                            app:layout_constraintStart_toEndOf="@+id/iconBg"
+                            app:layout_constraintTop_toTopOf="parent">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="社区守护模式"
+                                android:textStyle="bold"
+                                android:textColor="#18181B"
+                                android:textSize="18sp" />
+                                
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="加入互助社区，享受去中心化的群体安全保障。"
+                                android:textColor="#71717A"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/checkIcon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_check_circle"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+            <!-- Community Config Section -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                app:cardBackgroundColor="@android:color/white"
+                android:layout_marginTop="8dp"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp">
-
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#D1FAE5"
+                app:cardBackgroundColor="#ECFDF5">
+                
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="40dp">
-
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:layout_width="wrap_content"
+                    android:padding="20dp">
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:src="@drawable/ic_add"
-                        app:backgroundTint="#AE2F34"
-                        app:fabSize="normal"
-                        app:tint="@android:color/white" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+                        
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_sparkles"
+                            app:tint="#047857" />
+                            
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="社区配置"
+                            android:textStyle="bold"
+                            android:textColor="#064E3B"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                    
+                    <com.google.android.material.button.MaterialButton
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="添加成员"
-                        android:textColor="#191C1D"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:text="个人信息设置"
+                        android:textAllCaps="false"
+                        android:textColor="#047857"
+                        app:icon="@drawable/ic_person"
+                        app:iconTint="#047857"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_marginBottom="8dp" />
+                        
+                    <com.google.android.material.button.MaterialButton
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="后端服务器配置"
+                        android:textAllCaps="false"
+                        android:textColor="#047857"
+                        app:icon="@drawable/ic_server"
+                        app:iconTint="#047857"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Members List -->
+            <!-- Info Bar -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:background="#F3F4F5"
-                android:orientation="vertical"
-                android:padding="24dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="已添加的成员"
-                        android:textAllCaps="true"
-                        android:textColor="#584140"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:background="@drawable/bg_badge"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="4dp"
-                        android:text="2 个人"
-                        android:textColor="#584140"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-
-                <!-- Member Item 1 -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardBackgroundColor="@android:color/white"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="1dp"
-                    app:strokeWidth="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/avatar_father" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="父亲"
-                                android:textColor="#191C1D"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="father@email.com"
-                                android:textColor="#584140"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_delete"
-                            app:tint="#CCCCCC" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Member Item 2 -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@android:color/white"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="1dp"
-                    app:strokeWidth="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:background="#FFDAD7"
-                            android:padding="12dp"
-                            android:src="@drawable/ic_person"
-                            app:tint="#AE2F34" />
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="李阿姨"
-                                android:textColor="#191C1D"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="li_auntie@service.com"
-                                android:textColor="#584140"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_delete"
-                            app:tint="#CCCCCC" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-
-            <!-- Info Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:background="@android:color/white"
-                android:orientation="horizontal"
-                android:padding="24dp">
-
+                android:background="@drawable/bg_info_bar"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+                
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_marginTop="2dp"
                     android:src="@drawable/ic_info"
-                    app:tint="#AE2F34" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
+                    app:tint="#FB923C" />
+                    
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="为什么要添加被守护人？"
-                        android:textColor="#191C1D"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:lineSpacingExtra="2dp"
-                        android:text="当系统检测到您的异常状态（如长时间未移动或紧急求助）时，安守将第一时间通知这些联系人，并分享您的实时位置，为您提供全天候的守护网络。"
-                        android:textColor="#584140"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                    android:layout_marginStart="12dp"
+                    android:text="当前选择：社区守护模式"
+                    android:textColor="#9A3412"
+                    android:textStyle="bold"
+                    android:textSize="14sp" />
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Nav -->
-    <RelativeLayout
-        android:id="@+id/bottom_nav"
+    <!-- Footer Actions -->
+    <LinearLayout
+        android:id="@+id/footerActions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#F8F9FA"
+        android:background="#F9F9F9"
+        android:orientation="horizontal"
         android:padding="24dp"
+        android:gravity="end"
         app:layout_constraintBottom_toBottomOf="parent">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:drawableStart="@drawable/ic_arrow_back"
-            android:drawablePadding="8dp"
-            android:text="PREVIOUS"
-            android:textColor="#808080"
-            android:textSize="14sp"
-            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:backgroundTint="#AE2F34"
-            android:paddingHorizontal="32dp"
-            android:paddingVertical="12dp"
-            android:text="NEXT"
-            android:textColor="@android:color/white"
-            app:cornerRadius="12dp"
-            app:icon="@drawable/ic_arrow_forward"
-            app:iconGravity="end" />
-    </RelativeLayout>
+            android:text="取消"
+            android:textColor="#A1A1AA"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_marginEnd="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="确定"
+            android:paddingStart="40dp"
+            android:paddingEnd="40dp"
+            app:cornerRadius="16dp"
+            android:backgroundTint="#F87171"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

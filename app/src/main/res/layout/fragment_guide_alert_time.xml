@@ -1,140 +1,248 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#F8F9FA">
 
-    <LinearLayout
+    <!-- Header - 采用模式选择界面的设计 -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:padding="16dp"
+        android:background="#FFFFFF">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="设置报警检测时间"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            android:layout_marginBottom="16dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_logo"
+                android:tint="#ff6b6b"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LiveWell"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#ff6b6b"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tvTimeDescription"
+            android:id="@+id/tvStepIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="第 4 步，共 10 步"
+            android:textColor="#808080"
+            android:textSize="14sp"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:textColor="@color/text_secondary"
-            android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="24dp"/>
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:paddingBottom="80dp">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="24dp">
+            <!-- Title Section -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="40dp"
+                android:text="设置报警检测时间"
+                android:textColor="#191C1D"
+                android:textSize="36sp"
+                android:textStyle="bold" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:text="每天在此时间点检查您的状态"
+                android:textColor="#584140"
+                android:textSize="18sp" />
+
+            <!-- Main Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/mainCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp"
-                android:gravity="center">
+                android:layout_marginTop="24dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="检测开始时间"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="16dp"/>
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="32dp">
+
+                    <!-- Time Display -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvAlertHour"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="23"
+                            android:textColor="#FF6B6B"
+                            android:textSize="72sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="16dp"
+                            android:text=":"
+                            android:textColor="#FFDAD8"
+                            android:textSize="72sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvAlertMinute"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00"
+                            android:textColor="#FF6B6B"
+                            android:textSize="72sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Control Buttons -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:orientation="horizontal">
+
+                        <!-- Hour Controls -->
+                        <ImageButton
+                            android:id="@+id/btnHourPlus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_circle_gray"
+                            android:src="@drawable/ic_add"
+                            app:tint="#584140" />
+
+                        <ImageButton
+                            android:id="@+id/btnHourMinus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/bg_circle_gray"
+                            android:src="@drawable/ic_remove"
+                            app:tint="#584140" />
+
+                        <!-- Spacer -->
+                        <View
+                            android:layout_width="48dp"
+                            android:layout_height="0dp" />
+
+                        <!-- Minute Controls -->
+                        <ImageButton
+                            android:id="@+id/btnMinutePlus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_circle_gray"
+                            android:src="@drawable/ic_add"
+                            app:tint="#584140" />
+
+                        <ImageButton
+                            android:id="@+id/btnMinuteMinus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/bg_circle_gray"
+                            android:src="@drawable/ic_remove"
+                            app:tint="#584140" />
+                    </LinearLayout>
+
+                    <!-- Status Badge -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="32dp"
+                        android:background="@drawable/bg_pill_pink"
+                        android:gravity="center"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp">
+
+                        <View
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/bg_circle_red" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="ACTIVE PROTECTION MODE"
+                            android:textColor="#AE2F34"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Info Box -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/infoBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="#F3F4F5"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:padding="16dp">
 
-                    <Button
-                        android:id="@+id/btnHourMinus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_info"
+                        app:tint="#FF6B6B" />
 
                     <TextView
-                        android:id="@+id/tvAlertHour"
-                        android:layout_width="44dp"
+                        android:id="@+id/tvTimeDescription"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="23"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"
-                        android:layout_marginHorizontal="4dp"/>
-
-                    <Button
-                        android:id="@+id/btnHourPlus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=":"
-                        android:textSize="24sp"
-                        android:textColor="@color/text_primary"
-                        android:layout_marginHorizontal="4dp"/>
-
-                    <Button
-                        android:id="@+id/btnMinuteMinus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
-                    <TextView
-                        android:id="@+id/tvAlertMinute"
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:text="00"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"
-                        android:layout_marginHorizontal="4dp"/>
-
-                    <Button
-                        android:id="@+id/btnMinutePlus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="系统将在每天 23:00 开始检测。如果在此时间后您的步数或使用时长未达标，将触发报警。"
+                        android:textColor="#584140"
+                        android:textSize="14sp" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

@@ -36,12 +36,13 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tvStepIndicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:text="设置引导"
-            android:textColor="#94A3B8"
+            android:text="第 7 步，共 10 步"
+            android:textColor="#808080"
             android:textSize="14sp"/>
     </RelativeLayout>
 
@@ -108,7 +109,7 @@
                             android:layout_height="40dp"
                             android:src="@drawable/ic_mail"
                             android:padding="10dp"
-                            android:background="@drawable/bg_icon_container_red"
+                            android:background="@android:color/white"
                             app:tint="#ff6b6b" />
 
                         <TextView

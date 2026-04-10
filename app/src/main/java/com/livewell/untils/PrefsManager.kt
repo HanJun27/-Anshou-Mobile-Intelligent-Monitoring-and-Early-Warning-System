@@ -1520,4 +1520,186 @@ fun setProModeEnabled(enabled: Boolean) {
     prefs.edit().putBoolean("pro_mode_enabled", enabled).apply()
 }
 
+// ==================== 睡前快照相关方法 ====================
+
+/**
+ * ✅ 保存睡前活动数据快照
+ */
+fun savePreSleepSnapshot(date: String, steps: Int, usageMinutes: Int, sleepTime: Long) {
+    prefs.edit()
+        .putString("pre_sleep_steps_$date", steps.toString())
+        .putString("pre_sleep_usage_$date", usageMinutes.toString())
+        .putLong("pre_sleep_time_$date", sleepTime)
+        .apply()
+    
+    android.util.Log.i("PrefsManager", "✅ 睡前快照已保存：日期=$date, 步数=$steps, 使用时长=${usageMinutes}分钟")
+}
+
+/**
+ * ✅ 获取指定日期的睡前快照
+ */
+fun getPreSleepSnapshot(date: String): Triple<Int, Int, Long>? {
+    val steps = getString("pre_sleep_steps_$date")?.toIntOrNull() ?: return null
+    val usage = getString("pre_sleep_usage_$date")?.toIntOrNull() ?: return null
+    val time = getLong("pre_sleep_time_$date", 0)
+    
+    if (time == 0L) return null
+    
+    return Triple(steps, usage, time)
+}
+
+/**
+ * ✅ 删除指定日期的睡前快照
+ */
+fun removePreSleepSnapshot(date: String) {
+    prefs.edit()
+        .remove("pre_sleep_steps_$date")
+        .remove("pre_sleep_usage_$date")
+        .remove("pre_sleep_time_$date")
+        .apply()
+}
+
+/**
+ * ✅ 清理 7 天前的旧快照
+ */
+fun cleanupOldSnapshots(currentDate: String) {
+    try {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val calendar = Calendar.getInstance()
+        calendar.time = dateFormat.parse(currentDate) ?: Date()
+        
+        var cleanedCount = 0
+        
+        // 删除 7-30 天前的快照
+        for (i in 7..30) {
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+            val oldDate = dateFormat.format(calendar.time)
+            
+            val hadSnapshot = getLong("pre_sleep_time_$oldDate", 0) > 0
+            if (hadSnapshot) {
+                removePreSleepSnapshot(oldDate)
+                cleanedCount++
+            }
+        }
+        
+        if (cleanedCount > 0) {
+            android.util.Log.i("PrefsManager", "✅ 已清理 $cleanedCount 个旧快照")
+        }
+        
+    } catch (e: Exception) {
+        android.util.Log.e("PrefsManager", "❌ 清理旧快照失败：${e.message}", e)
+    }
+}
+
+/**
+ * ✅ 保存最近的活动状态（每 5 分钟更新）
+ */
+fun saveLastActiveState(steps: Int, usageMinutes: Int, timestamp: Long) {
+    prefs.edit()
+        .putLong("last_active_steps", steps.toLong())
+        .putLong("last_active_usage", usageMinutes.toLong())
+        .putLong("last_active_time", timestamp)
+        .apply()
+}
+
+/**
+ * ✅ 获取最近的活动状态
+ */
+fun getLastActiveState(): Triple<Int, Int, Long> {
+    val steps = getLong("last_active_steps", 0).toInt()
+    val usage = getLong("last_active_usage", 0).toInt()
+    val time = getLong("last_active_time", 0)
+    return Triple(steps, usage, time)
+}
+
+/**
+ * ✅ 获取考虑跨天睡眠的完整日活动数据
+ * @param context Context，用于获取实时数据
+ * @return Pair<步数, 使用时长>
+ */
+fun getCompleteDayActivity(context: android.content.Context): Pair<Int, Int> {
+    return try {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        
+        // 获取昨天的日期
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterdayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+        
+        // 检查是否有昨天的睡前快照
+        val snapshot = getPreSleepSnapshot(yesterdayStr)
+        
+        // 获取当前实时数据
+        val currentSteps = com.livewell.untils.SystemStepManager.getInstance(context).getTodaySteps(syncIfNeeded = true)
+        val currentUsage = com.livewell.untils.UsageStatsHelper(context).getTodayAppUsageMinutes()
+        
+        if (snapshot != null) {
+            val (preSleepSteps, preSleepUsage, preSleepTime) = snapshot
+            
+            // 有睡前快照，计算午夜后的增量
+            val stepsSinceMidnight = maxOf(0, currentSteps - preSleepSteps)
+            val usageSinceMidnight = maxOf(0, currentUsage.toInt() - preSleepUsage)
+            
+            android.util.Log.d("PrefsManager", "📊 跨天活动数据（使用睡前快照）：")
+            android.util.Log.d("PrefsManager", "  昨天睡前：步数=$preSleepSteps, 使用=$preSleepUsage")
+            android.util.Log.d("PrefsManager", "  今天当前：步数=$currentSteps, 使用=$currentUsage")
+            android.util.Log.d("PrefsManager", "  午夜后：步数=$stepsSinceMidnight, 使用=$usageSinceMidnight")
+            
+            Pair(stepsSinceMidnight, usageSinceMidnight)
+        } else {
+            // 没有睡前快照，检查是否有跨天未入睡的情况
+            val lastActiveState = getLastActiveState()
+            val (_, _, lastActiveTime) = lastActiveState
+            
+            if (lastActiveTime > 0) {
+                val hoursSinceLastActive = (System.currentTimeMillis() - lastActiveTime) / (1000 * 60 * 60)
+                
+                if (hoursSinceLastActive < 2) {
+                    // 用户最近 2 小时内还有活动，可能是跨天未睡
+                    android.util.Log.w("PrefsManager", "⚠️ 检测到跨天未入睡，使用原始数据（可能不准确）")
+                }
+            }
+            
+            // 降级方案：返回原始数据
+            Pair(currentSteps, currentUsage.toInt())
+        }
+        
+    } catch (e: Exception) {
+        android.util.Log.e("PrefsManager", "❌ 获取完整日活动数据失败：${e.message}", e)
+        // 降级方案：返回原始数据
+        val currentSteps = com.livewell.untils.SystemStepManager.getInstance(context).getTodaySteps(syncIfNeeded = true)
+        val currentUsage = com.livewell.untils.UsageStatsHelper(context).getTodayAppUsageMinutes()
+        Pair(currentSteps, currentUsage.toInt())
+    }
+}
+
+/**
+ * ✅ 检查数据完整性
+ * @return true=数据完整, false=数据不完整
+ */
+fun checkDataIntegrity(context: android.content.Context): Boolean {
+    try {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterdayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+        
+        val hasPreSleepSnapshot = getLong("pre_sleep_time_$yesterdayStr", 0) > 0
+        val currentSteps = com.livewell.untils.SystemStepManager.getInstance(context).getTodaySteps(syncIfNeeded = true)
+        val currentUsage = com.livewell.untils.UsageStatsHelper(context).getTodayAppUsageMinutes()
+        val hasTodayData = currentSteps > 0 || currentUsage > 0
+        
+        if (!hasPreSleepSnapshot && hasTodayData) {
+            android.util.Log.w("PrefsManager", "⚠️ 数据完整性检查失败：缺少昨天睡前快照")
+            return false
+        }
+        
+        return true
+        
+    } catch (e: Exception) {
+        android.util.Log.e("PrefsManager", "❌ 数据完整性检查失败：${e.message}", e)
+        return false
+    }
+}
+
 }

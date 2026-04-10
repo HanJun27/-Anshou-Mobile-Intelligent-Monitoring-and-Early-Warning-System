@@ -1,151 +1,312 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#F8F9FA">
 
-    <LinearLayout
+    <!-- Header - 采用模式选择界面的设计 -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:padding="16dp"
+        android:background="#FFFFFF">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="设置报警阈值"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            android:layout_marginBottom="24dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_logo"
+                android:tint="#ff6b6b"/>
 
-        <com.google.android.material.card.MaterialCardView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LiveWell"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#ff6b6b"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvStepIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="第 5 步，共 10 步"
+            android:textColor="#808080"
+            android:textSize="14sp"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical"
+            android:padding="24dp">
 
-            <LinearLayout
+            <!-- Title Section -->
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
+                android:text="设置报警阈值"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:textColor="#191C1D" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="步数阈值（每日最低活动步数）"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="12dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="定义触发警报的活动标准"
+                android:textSize="18sp"
+                android:textColor="#757575"
+                android:layout_marginTop="8dp" />
+
+            <!-- Step Threshold Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="32dp">
 
-                    <Button
-                        android:id="@+id/btnStepMinus"
-                        android:layout_width="56dp"
-                        android:layout_height="48dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="步数阈值"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DAILY STEP THRESHOLD"
+                                android:textSize="10sp"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.2"
+                                android:textColor="#BDBDBD" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_alignParentEnd="true"
+                            android:background="@drawable/circle_bg_gray"
+                            android:padding="10dp"
+                            android:src="@drawable/ic_steps" />
+                    </RelativeLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="32dp">
+
+                        <ImageButton
+                            android:id="@+id/btnStepMinus"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/circle_outline"
+                            android:src="@drawable/ic_remove" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:layout_marginHorizontal="16dp">
+
+                            <TextView
+                                android:id="@+id/tvStepValue"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="100"
+                                android:textSize="72sp"
+                                android:textStyle="bold"
+                                android:textColor="#ff6b6b"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:ellipsize="none"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="40sp"
+                                app:autoSizeMaxTextSize="72sp"
+                                app:autoSizeStepGranularity="2sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="STEPS"
+                                android:textSize="10sp"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.2"
+                                android:textColor="#BDBDBD" />
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btnStepPlus"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/circle_outline"
+                            android:src="@drawable/ic_add" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/tvStepValue"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="100"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"/>
-
-                    <Button
-                        android:id="@+id/btnStepPlus"
-                        android:layout_width="56dp"
-                        android:layout_height="48dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
+                        android:text="每日最低活动步数要求，低于此值可能触发警报"
+                        android:textSize="14sp"
+                        android:textColor="#757575"
+                        android:layout_marginTop="24dp" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
+            <!-- Duration Threshold Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="容忍时长（分钟）"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="12dp"/>
+                android:layout_marginTop="24dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="32dp">
 
-                    <Button
-                        android:id="@+id/btnDurationMinus"
-                        android:layout_width="56dp"
-                        android:layout_height="48dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="使用时长阈值"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="#191C1D" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="USAGE DURATION THRESHOLD"
+                                android:textSize="10sp"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.2"
+                                android:textColor="#BDBDBD" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_alignParentEnd="true"
+                            android:background="@drawable/circle_bg_gray"
+                            android:padding="12dp"
+                            android:src="@drawable/ic_clock_threshold" />
+                    </RelativeLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="32dp">
+
+                        <ImageButton
+                            android:id="@+id/btnDurationMinus"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/circle_outline"
+                            android:src="@drawable/ic_remove" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:layout_marginHorizontal="16dp">
+
+                            <TextView
+                                android:id="@+id/tvDurationValue"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="30"
+                                android:textSize="72sp"
+                                android:textStyle="bold"
+                                android:textColor="#ff6b6b"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:ellipsize="none"
+                                app:autoSizeTextType="uniform"
+                                app:autoSizeMinTextSize="40sp"
+                                app:autoSizeMaxTextSize="72sp"
+                                app:autoSizeStepGranularity="2sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="MINUTES"
+                                android:textSize="10sp"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.2"
+                                android:textColor="#BDBDBD" />
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/btnDurationPlus"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/circle_outline"
+                            android:src="@drawable/ic_add" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/tvDurationValue"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="10"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"/>
-
-                    <Button
-                        android:id="@+id/btnDurationPlus"
-                        android:layout_width="56dp"
-                        android:layout_height="48dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
+                        android:text="每日最低应用使用时长，低于此值可能触发警报"
+                        android:textSize="14sp"
+                        android:textColor="#757575"
+                        android:layout_marginTop="24dp" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

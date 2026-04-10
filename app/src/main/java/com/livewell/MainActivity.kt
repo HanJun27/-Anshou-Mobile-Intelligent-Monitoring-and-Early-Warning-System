@@ -28,6 +28,11 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
+
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileReader
+import java.io.InputStreamReader
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -58,8 +63,6 @@ import com.livewell.untils.SystemStepManager
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import org.json.JSONArray
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -170,8 +173,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // ✅ 初始化文件日志工具
+        com.livewell.untils.FileLogger.init(applicationContext)
+        com.livewell.untils.FileLogger.i("MainActivity", "====== 应用启动 ======")
+        
         // ✅ 设置全局异常捕获
         Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
+        
+        // ✅ 初始化日志系统
+        try {
+            com.livewell.untils.LogWriter.init(this)
+            com.livewell.untils.LogWriter.writeLog("MainActivity", "====== 应用启动 ======")
+            com.livewell.untils.LogWriter.writeLog("MainActivity", "Android 版本：${Build.VERSION.RELEASE}")
+            com.livewell.untils.LogWriter.writeLog("MainActivity", "设备型号：${Build.MANUFACTURER} ${Build.MODEL}")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "日志系统初始化失败", e)
+        }
         
         try {
             Log.i("MainActivity", "====== 应用启动 ======")
@@ -498,6 +515,11 @@ try {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         prefsManager.saveLastCheckinDate(today)
         prefsManager.saveCheckinTime(System.currentTimeMillis())
+        
+        Log.i("MainActivity", "====== 签到成功 ======")
+        Log.i("MainActivity", "签到日期：$today")
+        Log.i("MainActivity", "签到时间：${System.currentTimeMillis()}")
+        
         Toast.makeText(this, "签到成功！", Toast.LENGTH_SHORT).show()
         // ✅ 通知 HomeFragment 更新 UI
         homeFragment?.let { fragment ->
@@ -829,10 +851,15 @@ private fun showSmartSettingsDialog() {
     // ✅ 设备使用统计控件（新增）
     //al tvBootTime = dialogView.findViewById<TextView>(R.id.tvBootTime)
     val tvAppUsage = dialogView.findViewById<TextView>(R.id.tvAppUsage)
+    val cardAppUsage = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardAppUsage)
     
     // ✅ 步数统计控件
     val tvStepCount = dialogView.findViewById<TextView>(R.id.tvStepCount)
     val tvStepThreshold = dialogView.findViewById<TextView>(R.id.tvStepThreshold)
+    val cardStepCount = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardStepCount)
+    
+    // ✅ 添加状态变量：是否显示相对数据（排除0点到睡觉前）
+    var showRelativeData = false
     
     // ✅ 强制刷新步数，确保显示最新数据
     if (::systemStepManager.isInitialized) {
@@ -842,6 +869,23 @@ private fun showSmartSettingsDialog() {
     
     // ✅ 初始显示步数
     updateStepCountDisplay(tvStepCount, tvStepThreshold)
+    
+    // ✅ 添加点击事件：切换显示绝对/相对数据（给整个 CardView 添加）
+    val toggleDataDisplay = {
+        showRelativeData = !showRelativeData
+        updateDataDisplay(tvAppUsage, tvStepCount, tvStepThreshold, showRelativeData)
+        
+        val message = if (showRelativeData) {
+            "已切换到相对数据模式\n（排除0点到睡觉前的数据）"
+        } else {
+            "已切换到绝对数据模式\n（显示从0点开始的累计数据）"
+        }
+        
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show()
+    }
+    
+    cardAppUsage.setOnClickListener { toggleDataDisplay() }
+    cardStepCount.setOnClickListener { toggleDataDisplay() }
     
     
     
@@ -1325,6 +1369,9 @@ private fun showUsageSettingsDialog() {
 
     private fun showSleepHistoryDialog() {
         val history = prefsManager.getSleepHistory()
+        android.util.Log.i("SleepHistory", "====== 开始显示睡眠历史 ======")
+        android.util.Log.i("SleepHistory", "原始数据：$history")
+        
         val lines = history.split("\n").takeLast(10).reversed()
         if (lines.isEmpty() || lines[0].isEmpty()) {
             Toast.makeText(this, "暂无睡眠历史数据", Toast.LENGTH_SHORT).show()
@@ -1332,16 +1379,31 @@ private fun showUsageSettingsDialog() {
         }
         val sb = StringBuilder()
         sb.append("最近睡眠记录\n\n")
-        for (line in lines) {
+        for ((index, line) in lines.withIndex()) {
+            android.util.Log.d("SleepHistory", "处理第 ${index + 1} 条记录：$line")
+            
             val parts = line.split(",")
+            android.util.Log.d("SleepHistory", "  分割后字段数：${parts.size}")
             if (parts.size >= 6) {
                 val date = parts[0]
-                val sleepTime = parts[4]
-                val wakeTime = parts[5]
-                val duration = parts[3].toLong() / (1000 * 60)
-                sb.append("$date  $sleepTime-$wakeTime  ${duration}分钟\n")
+                val sleepTimeStr = parts[4]
+                val wakeTimeStr = parts[5]
+                val durationMs = parts[3].toLongOrNull() ?: 0L
+                val durationMinutes = durationMs / (1000 * 60)
+                
+                android.util.Log.d("SleepHistory", "  日期：$date")
+                android.util.Log.d("SleepHistory", "  入睡时间：$sleepTimeStr")
+                android.util.Log.d("SleepHistory", "  醒来时间：$wakeTimeStr")
+                android.util.Log.d("SleepHistory", "  时长：$durationMinutes 分钟")
+                
+                sb.append("$date  $sleepTimeStr-$wakeTimeStr  ${durationMinutes}分钟\n")
+            } else {
+                android.util.Log.w("SleepHistory", "  ⚠️ 字段数不足，跳过此条记录")
             }
         }
+        
+        android.util.Log.i("SleepHistory", "最终显示内容：\n${sb.toString()}")
+        
         AlertDialog.Builder(this)
             .setTitle("睡眠历史")
             .setMessage(sb.toString())
@@ -1714,6 +1776,12 @@ private fun showUsageSettingsDialog() {
             val btnViewLogs = dialogView.findViewById<Button>(R.id.btnViewLogs)
             btnViewLogs.setOnClickListener {
                 showLogsDialog()
+            }
+            
+            // ✅ 新增：查看睡眠快照记录按钮
+            val btnViewSleepSnapshots = dialogView.findViewById<Button>(R.id.btnViewSleepSnapshots)
+            btnViewSleepSnapshots.setOnClickListener {
+                showSleepSnapshotsDialog()
             }
             
             // ✅ 新增：无声音乐频率测试相关按钮
@@ -2226,38 +2294,64 @@ private fun startAllServices() {
 
  private fun showModeSelectDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_mode_select, null)
-        val radioGroup = dialogView.findViewById<RadioGroup>(R.id.radioGroupMode)
-        val tvDescription = dialogView.findViewById<TextView>(R.id.tvModeDescription)
-        val communitySettingsPanel = dialogView.findViewById<LinearLayout>(R.id.communitySettingsPanel)
-        val btnPersonalInfo = dialogView.findViewById<Button>(R.id.btnPersonalInfo)
-        val btnServerConfig = dialogView.findViewById<Button>(R.id.btnServerConfig)
         
-        when (currentMode) {
-            PrefsManager.MODE_GUARDIAN -> radioGroup.check(R.id.radioGuardian)
-            PrefsManager.MODE_RECEIVER -> radioGroup.check(R.id.radioReceiver)
-            PrefsManager.MODE_MIXED -> radioGroup.check(R.id.radioMixed)
-            PrefsManager.MODE_COMMUNITY -> radioGroup.check(R.id.radioCommunity)
+        // ✅ 获取卡片
+        val cardGuardian = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardGuardian)
+        val cardReceiver = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardReceiver)
+        val cardMixed = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardMixed)
+        val cardCommunity = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardCommunity)
+        
+        val checkIcon = dialogView.findViewById<android.widget.ImageView>(R.id.checkIcon)
+        
+        val tvDescription = dialogView.findViewById<TextView>(R.id.tvModeDescription)
+        val communitySettingsPanel = dialogView.findViewById<com.google.android.material.card.MaterialCardView>(R.id.communitySettingsPanel)
+        val btnPersonalInfo = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnPersonalInfo)
+        val btnServerConfig = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnServerConfig)
+        
+        // ✅ 当前选中的模式
+        var selectedMode = currentMode
+        
+        // ✅ 初始化选中状态
+        updateCardSelection(
+            selectedMode,
+            cardGuardian, cardReceiver, cardMixed, cardCommunity,
+            checkIcon, tvDescription, communitySettingsPanel
+        )
+        
+        // ✅ 为每个卡片添加点击事件
+        cardGuardian.setOnClickListener {
+            selectedMode = PrefsManager.MODE_GUARDIAN
+            updateCardSelection(
+                selectedMode,
+                cardGuardian, cardReceiver, cardMixed, cardCommunity,
+                checkIcon, tvDescription, communitySettingsPanel
+            )
         }
         
-        // 显示/隐藏社区设置面板
-        updateCommunitySettingsPanelVisibility(communitySettingsPanel, currentMode)
+        cardReceiver.setOnClickListener {
+            selectedMode = PrefsManager.MODE_RECEIVER
+            updateCardSelection(
+                selectedMode,
+                cardGuardian, cardReceiver, cardMixed, cardCommunity,
+                checkIcon, tvDescription, communitySettingsPanel
+            )
+        }
         
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            tvDescription.text = when (checkedId) {
-                R.id.radioGuardian -> "被守护模式：监测本机用户状态，失能时发送警报给紧急联系人"
-                R.id.radioReceiver -> "守护模式：定期检测邮箱，收到他人发来的警报时发出强化通知"
-                R.id.radioMixed -> "混合模式：同时具备被守护和守护功能，既发送警报也接收警报"
-                R.id.radioCommunity -> "社区守护模式：除发送警报外，同时向社区平台上报数据，接受社区监护"
-                else -> ""
-            }
-            
-            // 更新面板可见性
-            updateCommunitySettingsPanelVisibility(
-                communitySettingsPanel,
-                when (checkedId) {
-                    R.id.radioCommunity -> PrefsManager.MODE_COMMUNITY
-                    else -> currentMode
-                }
+        cardMixed.setOnClickListener {
+            selectedMode = PrefsManager.MODE_MIXED
+            updateCardSelection(
+                selectedMode,
+                cardGuardian, cardReceiver, cardMixed, cardCommunity,
+                checkIcon, tvDescription, communitySettingsPanel
+            )
+        }
+        
+        cardCommunity.setOnClickListener {
+            selectedMode = PrefsManager.MODE_COMMUNITY
+            updateCardSelection(
+                selectedMode,
+                cardGuardian, cardReceiver, cardMixed, cardCommunity,
+                checkIcon, tvDescription, communitySettingsPanel
             )
         }
         
@@ -2274,14 +2368,7 @@ private fun startAllServices() {
             .setTitle("模式选择")
             .setView(dialogView)
             .setPositiveButton("确定") { _, _ ->
-                val selectedId = radioGroup.checkedRadioButtonId
-                val newMode = when (selectedId) {
-                    R.id.radioGuardian -> PrefsManager.MODE_GUARDIAN
-                    R.id.radioReceiver -> PrefsManager.MODE_RECEIVER
-                    R.id.radioMixed -> PrefsManager.MODE_MIXED
-                    R.id.radioCommunity -> PrefsManager.MODE_COMMUNITY
-                    else -> PrefsManager.MODE_GUARDIAN
-                }
+                val newMode = selectedMode
                 
                 // 如果从被守护模式切换到其他模式，保存被守护模式设置
                 if (currentMode == PrefsManager.MODE_GUARDIAN && newMode != PrefsManager.MODE_GUARDIAN) {
@@ -2306,6 +2393,77 @@ private fun startAllServices() {
             }
             .setNegativeButton("取消", null)
             .show()
+    }
+    
+    /**
+     * ✅ 更新卡片选中状态
+     */
+    private fun updateCardSelection(
+        mode: String,
+        cardGuardian: com.google.android.material.card.MaterialCardView,
+        cardReceiver: com.google.android.material.card.MaterialCardView,
+        cardMixed: com.google.android.material.card.MaterialCardView,
+        cardCommunity: com.google.android.material.card.MaterialCardView,
+        checkIcon: android.widget.ImageView,
+        tvDescription: TextView,
+        communitySettingsPanel: com.google.android.material.card.MaterialCardView
+    ) {
+        // 重置所有卡片样式
+        resetCardStyle(cardGuardian)
+        resetCardStyle(cardReceiver)
+        resetCardStyle(cardMixed)
+        resetCardStyle(cardCommunity)
+        
+        // 隐藏勾选图标
+        checkIcon.visibility = android.view.View.GONE
+        
+        // 根据模式设置选中状态
+        when (mode) {
+            PrefsManager.MODE_GUARDIAN -> {
+                setSelectedCardStyle(cardGuardian)
+                tvDescription.text = "当前选择：被守护模式"
+            }
+            PrefsManager.MODE_RECEIVER -> {
+                setSelectedCardStyle(cardReceiver)
+                tvDescription.text = "当前选择：守护模式"
+            }
+            PrefsManager.MODE_MIXED -> {
+                setSelectedCardStyle(cardMixed)
+                tvDescription.text = "当前选择：混合模式"
+            }
+            PrefsManager.MODE_COMMUNITY -> {
+                setSelectedCardStyle(cardCommunity)
+                checkIcon.visibility = android.view.View.VISIBLE
+                tvDescription.text = "当前选择：社区守护模式"
+            }
+        }
+        
+        // 显示/隐藏社区设置面板
+        communitySettingsPanel.visibility = if (mode == PrefsManager.MODE_COMMUNITY) {
+            android.view.View.VISIBLE
+        } else {
+            android.view.View.GONE
+        }
+    }
+    
+    /**
+     * ✅ 重置卡片样式（未选中）
+     */
+    private fun resetCardStyle(card: com.google.android.material.card.MaterialCardView) {
+        card.strokeWidth = 2
+        card.strokeColor = android.graphics.Color.parseColor("#E0E0E0")
+        card.setCardBackgroundColor(android.graphics.Color.parseColor("#F9F9F9"))
+        card.cardElevation = 0f
+    }
+    
+    /**
+     * ✅ 设置卡片选中样式
+     */
+    private fun setSelectedCardStyle(card: com.google.android.material.card.MaterialCardView) {
+        card.strokeWidth = 2
+        card.strokeColor = android.graphics.Color.parseColor("#F87171")
+        card.setCardBackgroundColor(android.graphics.Color.parseColor("#FEF2F2"))
+        card.cardElevation = 4f
     }
 
     private fun updateCommunitySettingsPanelVisibility(panel: LinearLayout, mode: String) {
@@ -3420,15 +3578,16 @@ private fun startAllServices() {
     private fun loadAndDisplayLogs(textView: TextView, filterType: String) {
         val logs = StringBuilder()
         
-        // ✅ 读取 logcat 日志（使用正确的参数）
+        // ✅ 使用文件日志代替 logcat（更可靠）
         try {
-            // ✅ 获取当前应用的 PID
-            val pid = android.os.Process.myPid()
+            val logFile = File(filesDir, "app_logs.txt")
             
-            // ✅ 使用 -t 参数限制行数，-v time 显示时间
-            val command = "logcat -d -t 500 -v time"
-            val process = Runtime.getRuntime().exec(command)
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            if (!logFile.exists()) {
+                textView.text = "暂无日志记录\n\n提示：\n1. 日志会在应用运行时自动记录\n2. 请触发一些操作（如签到、发送警报等）\n3. 然后重新打开此界面查看"
+                return
+            }
+            
+            val reader = BufferedReader(FileReader(logFile))
             var line: String?
             
             val regex = when (filterType) {
@@ -3446,18 +3605,23 @@ private fun startAllServices() {
             
             var matchedCount = 0
             var totalCount = 0
+            val allLines = mutableListOf<String>()
             
+            // 读取所有行
             while (true) {
-                val currentLine = reader.readLine() ?: break
+                line = reader.readLine() ?: break
+                allLines.add(line)
                 totalCount++
+            }
+            reader.close()
+            
+            // 从后往前显示（最新的在前）
+            for (i in allLines.size - 1 downTo 0) {
+                val currentLine = allLines[i]
                 
-                // ✅ 如果是指定类型，需要匹配关键词
-                // ✅ 如果是“全部”，显示所有日志（不限制包名）
                 val shouldInclude = if (pattern != null) {
-                    // 有过滤条件：需要匹配关键词
                     pattern.containsMatchIn(currentLine)
                 } else {
-                    // 无过滤条件：显示所有日志
                     true
                 }
                 
@@ -3465,14 +3629,11 @@ private fun startAllServices() {
                     logs.appendLine(currentLine)
                     matchedCount++
                     
-                    // ✅ 限制最多显示 300 条日志
                     if (matchedCount >= 300) {
                         break
                     }
                 }
             }
-            
-            reader.close()
             
             Log.d("MainActivity", "日志加载完成，总共读取 $totalCount 条，匹配到 $matchedCount 条日志")
             
@@ -3484,7 +3645,7 @@ private fun startAllServices() {
         
         // 如果日志为空，显示提示
         if (logs.isEmpty()) {
-            textView.text = "暂无相关日志\n\n提示：\n1. 请先触发相关操作（如刷新邮件、发送警报等）\n2. 尝试切换到“全部”标签查看\n3. 检查应用是否有日志权限"
+            textView.text = "暂无相关日志\n\n提示：\n1. 请先触发相关操作（如刷新邮件、发送警报等）\n2. 尝试切换到“全部”标签查看\n3. 日志会自动保存到应用内部存储"
         } else {
             textView.text = logs.toString()
         }
@@ -3495,7 +3656,13 @@ private fun startAllServices() {
      */
     private fun clearLogs() {
         try {
+            // 清空文件日志
+            com.livewell.untils.FileLogger.clearLogs()
+            
+            // 也清空 logcat（如果有权限）
             Runtime.getRuntime().exec("logcat -c")
+            
+            Log.i("MainActivity", "日志已清空")
         } catch (e: Exception) {
             Log.e("MainActivity", "清空日志失败", e)
         }
@@ -3544,6 +3711,211 @@ private fun startAllServices() {
         } catch (e: Exception) {
             Log.e("MainActivity", "导出日志失败", e)
             Toast.makeText(this, "导出失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * ✅ 显示睡眠快照记录对话框
+     */
+    private fun showSleepSnapshotsDialog() {
+        android.util.Log.i("SleepSnapshot", "====== 开始显示睡眠快照对话框 ======")
+        
+        val dialogView = layoutInflater.inflate(R.layout.dialog_sleep_snapshots, null)
+        val layoutSnapshotsList = dialogView.findViewById<LinearLayout>(R.id.layoutSnapshotsList)
+        val btnClose = dialogView.findViewById<Button>(R.id.btnClose)
+        
+        // 获取最近 7 天的快照
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val calendar = Calendar.getInstance()
+        
+        var hasSnapshots = false
+        var snapshotCount = 0
+        
+        for (i in 0 until 7) {
+            val dateStr = dateFormat.format(calendar.time)
+            android.util.Log.d("SleepSnapshot", "检查日期：$dateStr")
+            
+            val snapshot = prefsManager.getPreSleepSnapshot(dateStr)
+            
+            if (snapshot != null) {
+                hasSnapshots = true
+                snapshotCount++
+                val (steps, usage, sleepTime) = snapshot
+                
+                android.util.Log.i("SleepSnapshot", "找到快照 [$snapshotCount]：日期=$dateStr, 步数=$steps, 使用=$usage, 入睡时间=$sleepTime")
+                
+                // 创建快照卡片
+                val cardView = com.google.android.material.card.MaterialCardView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(0, 0, 0, 8)
+                    }
+                    radius = 8f
+                    cardElevation = 2f
+                }
+                
+                val cardContent = LinearLayout(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(32, 24, 32, 24)
+                }
+                
+                // 日期标题
+                val tvDate = TextView(this).apply {
+                    text = "日期：$dateStr"
+                    textSize = 16f
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    setTextColor(getColor(R.color.primary))
+                }
+                
+                // 入睡时间
+                val sleepTimeStr = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(sleepTime))
+                val tvSleepTime = TextView(this).apply {
+                    text = "入睡时间：$sleepTimeStr"
+                    textSize = 14f
+                    setTextColor(getColor(R.color.text_primary))
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 8
+                    }
+                }
+                
+                // 步数
+                val tvSteps = TextView(this).apply {
+                    text = "睡前步数：$steps 步"
+                    textSize = 14f
+                    setTextColor(getColor(R.color.text_primary))
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 4
+                    }
+                }
+                
+                // 使用时长
+                val tvUsage = TextView(this).apply {
+                    text = "睡前使用时长：$usage 分钟"
+                    textSize = 14f
+                    setTextColor(getColor(R.color.text_primary))
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 4
+                    }
+                }
+                
+                cardContent.addView(tvDate)
+                cardContent.addView(tvSleepTime)
+                cardContent.addView(tvSteps)
+                cardContent.addView(tvUsage)
+                cardView.addView(cardContent)
+                
+                layoutSnapshotsList.addView(cardView)
+            }
+            
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+        }
+        
+        android.util.Log.i("SleepSnapshot", "检查结果：hasSnapshots=$hasSnapshots, 共找到 $snapshotCount 个快照")
+        
+        if (!hasSnapshots) {
+            val tvNoData = TextView(this).apply {
+                text = "暂无快照记录\n\n提示：\n• 快照会在检测到入睡时自动保存\n• 请确保睡眠监测服务正在运行\n• 尝试睡一觉后再来查看"
+                textSize = 14f
+                setTextColor(getColor(R.color.text_secondary))
+                gravity = android.view.Gravity.CENTER
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(0, 40, 0, 40)
+                }
+            }
+            layoutSnapshotsList.addView(tvNoData)
+        }
+        
+        // 创建对话框
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+        
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialog.show()
+    }
+    
+    /**
+     * ✅ 公开方法：显示睡眠快照记录（用于测试）
+     */
+    fun showSleepSnapshotsForTest() {
+        showSleepSnapshotsDialog()
+    }
+    
+    /**
+     * ✅ 更新数据显示（绝对/相对数据切换）
+     */
+    private fun updateDataDisplay(
+        tvAppUsage: TextView,
+        tvStepCount: TextView,
+        tvStepThreshold: TextView,
+        showRelative: Boolean
+    ) {
+        if (showRelative) {
+            // 显示相对数据（排除0点到睡觉前）
+            val (usageMinutes, stepCount) = prefsManager.getCompleteDayActivity(this)
+            
+            tvAppUsage.text = "${usageMinutes} 分钟"
+            tvStepCount.text = "${stepCount} 步"
+            
+            // 设置颜色
+            val stepThreshold = prefsManager.getStepThreshold()
+            tvStepThreshold.text = "目标：${stepThreshold} 步"
+            
+            if (prefsManager.isStepMonitorEnabled()) {
+                if (stepCount >= stepThreshold) {
+                    tvStepCount.setTextColor(getColor(R.color.success))
+                } else {
+                    tvStepCount.setTextColor(getColor(R.color.error))
+                }
+            } else {
+                tvStepCount.setTextColor(getColor(R.color.text_secondary))
+            }
+            
+            android.util.Log.d("DataDisplay", "显示相对数据：使用时长=${usageMinutes}分钟, 步数=${stepCount}步")
+        } else {
+            // 显示绝对数据（从0点开始的累计）
+            val appUsage = usageStatsHelper.getTodayAppUsageMinutes()
+            val stepCount = getTodayStepCount()
+            
+            tvAppUsage.text = "${appUsage} 分钟"
+            tvStepCount.text = "${stepCount} 步"
+            
+            // 设置颜色
+            val stepThreshold = prefsManager.getStepThreshold()
+            tvStepThreshold.text = "目标：${stepThreshold} 步"
+            
+            if (prefsManager.isStepMonitorEnabled()) {
+                if (stepCount >= stepThreshold) {
+                    tvStepCount.setTextColor(getColor(R.color.success))
+                } else {
+                    tvStepCount.setTextColor(getColor(R.color.error))
+                }
+            } else {
+                tvStepCount.setTextColor(getColor(R.color.text_secondary))
+            }
+            
+            android.util.Log.d("DataDisplay", "显示绝对数据：使用时长=${appUsage}分钟, 步数=${stepCount}步")
         }
     }
 }

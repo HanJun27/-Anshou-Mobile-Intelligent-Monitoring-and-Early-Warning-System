@@ -123,6 +123,10 @@ class SettingsGuideActivity : AppCompatActivity() {
                 currentStep = position
                 prefsManager.saveSettingsGuideStep(position)
                 updateButtons()
+                
+                // ✅ 更新当前页面的步骤数显示
+                updateCurrentFragmentStepIndicator(position)
+                
                 android.util.Log.d("ViewPager", "✅ currentStep 已更新为: $currentStep")
             }
         })
@@ -131,9 +135,9 @@ class SettingsGuideActivity : AppCompatActivity() {
     private fun updateButtons() {
         btnPrevious.visibility = if (currentStep == 0) View.GONE else View.VISIBLE
         btnPrevious.isEnabled = currentStep > 0
-        
+            
         if (currentStep == 0) {
-            // 权限页面，显示"下一步"
+            // 权限页面，显示“下一步”
             btnNext.text = "下一步"
         } else if (currentStep == totalSteps - 1) {
             btnNext.text = "完成"
@@ -167,6 +171,32 @@ class SettingsGuideActivity : AppCompatActivity() {
         }
     }
     
+    /**
+     * ✅ 更新当前 Fragment 的步骤数显示
+     */
+    private fun updateCurrentFragmentStepIndicator(position: Int) {
+        try {
+            val fragment = fragments[position]
+            val view = fragment.view
+                
+            if (view != null) {
+                // 查找步骤数 TextView（ID: tvStepIndicator）
+                val tvStepIndicator = view.findViewById<android.widget.TextView>(
+                    resources.getIdentifier("tvStepIndicator", "id", packageName)
+                )
+                    
+                if (tvStepIndicator != null) {
+                    tvStepIndicator.text = "第 ${position} 步，共 ${totalSteps} 步"
+                    android.util.Log.d("StepIndicator", "✅ 更新步骤数: $position / $totalSteps")
+                } else {
+                    android.util.Log.w("StepIndicator", "⚠️ 未找到 tvStepIndicator")
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("StepIndicator", "❌ 更新步骤数失败: ${e.message}")
+        }
+    }
+    
     internal fun finishGuide() {
         // ✅ 标记设置引导已完成，下次启动不再显示
         prefsManager.setSettingsGuideShown(true)
@@ -195,31 +225,35 @@ class SettingsGuideActivity : AppCompatActivity() {
         
         when (mode) {
             PrefsManager.MODE_GUARDIAN -> {
-                // 被守护模式：显示原有流程
-                fragments.add(AutoAlertModeFragment())
-                fragments.add(AlertCriteriaFragment())
-                fragments.add(AlertTimeFragment())
-                fragments.add(ThresholdFragment())
-                fragments.add(ConfirmMechanismFragment())
-                fragments.add(EmailRecipientFragment())
-                fragments.add(SleepMonitorFragment())
+                // 被守护模式：本机用户，发送警报给紧急联系人
+                fragments.add(AutoAlertModeFragment())           // 自动报警开关
+                fragments.add(AlertCriteriaFragment())           // 报警判断标准
+                fragments.add(AlertTimeFragment())               // 报警检查时间
+                fragments.add(ThresholdFragment())               // 报警阈值（步数 + 使用时长）
+                fragments.add(ConfirmMechanismFragment())        // 报警确认机制
+                fragments.add(EmailProviderFragment())           // 发件人邮箱配置（SMTP）
+                fragments.add(EmailRecipientFragment())          // 收件人邮箱配置（紧急联系人）
+                fragments.add(SleepMonitorFragment())            // 睡眠监测设置
             }
             PrefsManager.MODE_RECEIVER -> {
-                // 守护模式：显示邮箱配置和添加被守护人
-                fragments.add(EmailProviderFragment())
-                fragments.add(GuardianTargetsFragment())
+                // 守护模式：监控他人，接收警报邮件
+                fragments.add(EmailProviderFragment())           // 发件人邮箱配置（IMAP，用于接收邮件）
+                fragments.add(GuardianTargetsFragment())         // 添加被守护人（监控对象）
             }
             PrefsManager.MODE_MIXED -> {
-                // 混合模式：先显示守护模式步骤，再显示被守护模式步骤
-                fragments.add(EmailProviderFragment())
-                fragments.add(GuardianTargetsFragment())
-                fragments.add(AutoAlertModeFragment())
-                fragments.add(AlertCriteriaFragment())
-                fragments.add(AlertTimeFragment())
-                fragments.add(ThresholdFragment())
-                fragments.add(ConfirmMechanismFragment())
-                fragments.add(EmailRecipientFragment())
-                fragments.add(SleepMonitorFragment())
+                // 混合模式：同时具备被守护和守护功能
+                // 第一部分：守护功能配置
+                fragments.add(EmailProviderFragment())           // 发件人邮箱配置（SMTP + IMAP）
+                fragments.add(GuardianTargetsFragment())         // 添加被守护人
+                
+                // 第二部分：被守护功能配置
+                fragments.add(AutoAlertModeFragment())           // 自动报警开关
+                fragments.add(AlertCriteriaFragment())           // 报警判断标准
+                fragments.add(AlertTimeFragment())               // 报警检查时间
+                fragments.add(ThresholdFragment())               // 报警阈值（步数 + 使用时长）
+                fragments.add(ConfirmMechanismFragment())        // 报警确认机制
+                fragments.add(EmailRecipientFragment())          // 收件人邮箱配置（紧急联系人）
+                fragments.add(SleepMonitorFragment())            // 睡眠监测设置
             }
         }
         
@@ -347,6 +381,33 @@ abstract class SettingsGuideFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefsManager = PrefsManager(requireContext())
+    }
+    
+    /**
+     * ✅ 更新步骤数显示
+     */
+    protected fun updateStepIndicator(currentStep: Int, totalSteps: Int) {
+        try {
+            val activity = requireActivity() as? SettingsGuideActivity
+            if (activity != null) {
+                // 查找所有可能的步骤数 TextView（不同界面可能有不同的 ID）
+                val stepTextViews = listOf(
+                    "tvStepIndicator",  // 通用 ID
+                    "tvStepCount"       // 备用 ID
+                )
+                
+                for (idName in stepTextViews) {
+                    val resId = resources.getIdentifier(idName, "id", requireContext().packageName)
+                    if (resId != 0) {
+                        val tvStep = view?.findViewById<android.widget.TextView>(resId)
+                        tvStep?.text = "第 ${currentStep} 步，共 ${totalSteps} 步"
+                        break
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SettingsGuideFragment", "更新步骤数失败: ${e.message}")
+        }
     }
 }
 
@@ -621,24 +682,35 @@ class AutoAlertModeFragment : SettingsGuideFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        val switchAutoAlert = view.findViewById<SwitchMaterial>(R.id.switchAutoAlert)
-        val tvDescription = view.findViewById<TextView>(R.id.tvDescription)
+        val switchAutoAlert = view.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchAutoAlert)
+        val tvStatusBadge = view.findViewById<TextView>(R.id.tvStatusBadge)
         
         val prefsManager = PrefsManager(requireContext())
-        switchAutoAlert.isChecked = prefsManager.isAutoAlertModeEnabled()
+        val isEnabled = prefsManager.isAutoAlertModeEnabled()
         
-        tvDescription.text = """
-            自动报警模式说明：
-            
-            ✓ 开启后，系统会自动检测您的状态
-            ✓ 不需要用户进行签到操作
-            ✓ 当检测到异常时自动发送警报
-            
-            是否开启自动报警模式？
-        """.trimIndent()
+        switchAutoAlert.isChecked = isEnabled
+        
+        // ✅ 根据开关状态更新徽章显示
+        updateAutoAlertBadge(isEnabled, tvStatusBadge)
         
         switchAutoAlert.setOnCheckedChangeListener { _, isChecked ->
             prefsManager.setAutoAlertModeEnabled(isChecked)
+            updateAutoAlertBadge(isChecked, tvStatusBadge)
+        }
+    }
+    
+    /**
+     * ✅ 更新自动报警状态徽章
+     */
+    private fun updateAutoAlertBadge(isEnabled: Boolean, badge: TextView) {
+        if (isEnabled) {
+            badge.text = "ACTIVE PROTECTION MODE"
+            badge.setTextColor(android.graphics.Color.parseColor("#AE2F34"))
+            badge.visibility = View.VISIBLE
+        } else {
+            badge.text = "PROTECTION OFF"
+            badge.setTextColor(android.graphics.Color.parseColor("#9E9E9E"))
+            badge.visibility = View.VISIBLE
         }
     }
 }
@@ -654,6 +726,9 @@ class AlertCriteriaFragment : SettingsGuideFragment() {
         super.onViewCreated(view, savedInstanceState)
         
         val radioGroup = view.findViewById<android.widget.RadioGroup>(R.id.radioGroupCriteria)
+        val cardStep = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardStep)
+        val cardUsage = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardUsage)
+        val cardMixed = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.cardMixed)
         val prefsManager = PrefsManager(requireContext())
         
         when (prefsManager.getAlertCriteria()) {
@@ -662,6 +737,10 @@ class AlertCriteriaFragment : SettingsGuideFragment() {
             else -> radioGroup.check(R.id.radioMixed)
         }
         
+        // ✅ 初始化时更新卡片边框颜色
+        updateCriteriaCardBorderColors(radioGroup.checkedRadioButtonId, cardStep, cardUsage, cardMixed)
+        
+        // ✅ 监听 RadioGroup 选择变化
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
             val criteria = when (checkedId) {
                 R.id.radioStep -> PrefsManager.CRITERIA_STEP_ONLY
@@ -669,6 +748,53 @@ class AlertCriteriaFragment : SettingsGuideFragment() {
                 else -> PrefsManager.CRITERIA_MIXED
             }
             prefsManager.setAlertCriteria(criteria)
+            updateCriteriaCardBorderColors(checkedId, cardStep, cardUsage, cardMixed)
+        }
+        
+        // ✅ 为步数检测卡片添加点击事件
+        cardStep.setOnClickListener {
+            radioGroup.check(R.id.radioStep)
+        }
+        
+        // ✅ 为使用时长检测卡片添加点击事件
+        cardUsage.setOnClickListener {
+            radioGroup.check(R.id.radioUsage)
+        }
+        
+        // ✅ 为混合模式卡片添加点击事件
+        cardMixed.setOnClickListener {
+            radioGroup.check(R.id.radioMixed)
+        }
+    }
+    
+    /**
+     * ✅ 更新报警标准卡片边框颜色，选中时红色，未选中时灰色
+     */
+    private fun updateCriteriaCardBorderColors(
+        checkedId: Int,
+        cardStep: com.google.android.material.card.MaterialCardView,
+        cardUsage: com.google.android.material.card.MaterialCardView,
+        cardMixed: com.google.android.material.card.MaterialCardView
+    ) {
+        val selectedColor = android.graphics.Color.parseColor("#ff6b6b") // 红色
+        val unselectedColor = android.graphics.Color.parseColor("#CBD5E1") // 灰色
+        
+        when (checkedId) {
+            R.id.radioStep -> {
+                cardStep.setStrokeColor(selectedColor)
+                cardUsage.setStrokeColor(unselectedColor)
+                cardMixed.setStrokeColor(unselectedColor)
+            }
+            R.id.radioUsage -> {
+                cardStep.setStrokeColor(unselectedColor)
+                cardUsage.setStrokeColor(selectedColor)
+                cardMixed.setStrokeColor(unselectedColor)
+            }
+            R.id.radioMixed -> {
+                cardStep.setStrokeColor(unselectedColor)
+                cardUsage.setStrokeColor(unselectedColor)
+                cardMixed.setStrokeColor(selectedColor)
+            }
         }
     }
 }
@@ -685,10 +811,10 @@ class AlertTimeFragment : SettingsGuideFragment() {
         
         val tvHour = view.findViewById<TextView>(R.id.tvAlertHour)
         val tvMinute = view.findViewById<TextView>(R.id.tvAlertMinute)
-        val btnHourPlus = view.findViewById<Button>(R.id.btnHourPlus)
-        val btnHourMinus = view.findViewById<Button>(R.id.btnHourMinus)
-        val btnMinutePlus = view.findViewById<Button>(R.id.btnMinutePlus)
-        val btnMinuteMinus = view.findViewById<Button>(R.id.btnMinuteMinus)
+        val btnHourPlus = view.findViewById<android.widget.ImageButton>(R.id.btnHourPlus)
+        val btnHourMinus = view.findViewById<android.widget.ImageButton>(R.id.btnHourMinus)
+        val btnMinutePlus = view.findViewById<android.widget.ImageButton>(R.id.btnMinutePlus)
+        val btnMinuteMinus = view.findViewById<android.widget.ImageButton>(R.id.btnMinuteMinus)
         val tvDescription = view.findViewById<TextView>(R.id.tvTimeDescription)
         
         val prefsManager = PrefsManager(requireContext())
@@ -753,17 +879,17 @@ class ThresholdFragment : SettingsGuideFragment() {
         
         val tvStepValue = view.findViewById<TextView>(R.id.tvStepValue)
         val tvDurationValue = view.findViewById<TextView>(R.id.tvDurationValue)
-        val btnStepPlus = view.findViewById<Button>(R.id.btnStepPlus)
-        val btnStepMinus = view.findViewById<Button>(R.id.btnStepMinus)
-        val btnDurationPlus = view.findViewById<Button>(R.id.btnDurationPlus)
-        val btnDurationMinus = view.findViewById<Button>(R.id.btnDurationMinus)
+        val btnStepPlus = view.findViewById<android.widget.ImageButton>(R.id.btnStepPlus)
+        val btnStepMinus = view.findViewById<android.widget.ImageButton>(R.id.btnStepMinus)
+        val btnDurationPlus = view.findViewById<android.widget.ImageButton>(R.id.btnDurationPlus)
+        val btnDurationMinus = view.findViewById<android.widget.ImageButton>(R.id.btnDurationMinus)
         
         val prefsManager = PrefsManager(requireContext())
         var stepThreshold = prefsManager.getStepThreshold()
-        var duration = prefsManager.getAlertDuration()
+        var usageThreshold = prefsManager.getAppUsageThreshold()  // ✅ 修改为使用时长阈值
         
         tvStepValue.text = stepThreshold.toString()
-        tvDurationValue.text = duration.toString()
+        tvDurationValue.text = usageThreshold.toString()  // ✅ 显示使用时长阈值
         
         btnStepPlus.setOnClickListener {
             stepThreshold += 50
@@ -780,16 +906,16 @@ class ThresholdFragment : SettingsGuideFragment() {
         }
         
         btnDurationPlus.setOnClickListener {
-            duration++
-            tvDurationValue.text = duration.toString()
-            prefsManager.setAlertDuration(duration)
+            usageThreshold++
+            tvDurationValue.text = usageThreshold.toString()
+            prefsManager.setAppUsageThreshold(usageThreshold)  // ✅ 保存为使用时长阈值
         }
         
         btnDurationMinus.setOnClickListener {
-            if (duration > 1) {
-                duration--
-                tvDurationValue.text = duration.toString()
-                prefsManager.setAlertDuration(duration)
+            if (usageThreshold > 1) {
+                usageThreshold--
+                tvDurationValue.text = usageThreshold.toString()
+                prefsManager.setAppUsageThreshold(usageThreshold)  // ✅ 保存为使用时长阈值
             }
         }
     }
@@ -806,20 +932,9 @@ class ConfirmMechanismFragment : SettingsGuideFragment() {
         super.onViewCreated(view, savedInstanceState)
         
         val switchConfirm = view.findViewById<SwitchMaterial>(R.id.switchConfirm)
-        val tvDescription = view.findViewById<TextView>(R.id.tvConfirmDescription)
         
         val prefsManager = PrefsManager(requireContext())
         switchConfirm.isChecked = prefsManager.isAlertConfirmEnabled()
-        
-        tvDescription.text = """
-            报警确认机制说明：
-            
-            ✓ 开启后，系统在发送警报前会先尝试确认
-            ✓ 避免误报带来的不便
-            ✓ 如果用户主动确认，则取消本次警报
-            
-            建议开启此功能以减少误报
-        """.trimIndent()
         
         switchConfirm.setOnCheckedChangeListener { _, isChecked ->
             prefsManager.setAlertConfirmEnabled(isChecked)
@@ -877,13 +992,31 @@ class EmailProviderFragment : SettingsGuideFragment() {
         val btn163 = view.findViewById<Button>(R.id.btn163Config)
         val btnTest = view.findViewById<Button>(R.id.btnTestSend)
         
+        // ✅ 从 PrefsManager 读取上次配置的邮箱（通过 SMTP host 判断）
+        val prefsManager = PrefsManager(requireContext())
+        val smtpHost = prefsManager.getEmailSmtpHost()
+        
+        // ✅ 根据 SMTP host 设置初始选中状态
+        val initialCheckedId = if (smtpHost.contains("163")) {
+            R.id.radio163
+        } else {
+            R.id.radioQQ  // 默认 QQ
+        }
+        
+        // ✅ 强制设置 RadioGroup 的选中状态（避免布局文件中的静态 checked 属性干扰）
+        radioGroupProvider.check(initialCheckedId)
+        
         // ✅ 初始化时只显示选中的邮箱配置按钮
-        updateConfigButtonsVisibility(radioGroupProvider.checkedRadioButtonId, btnQQ, btn163)
+        updateConfigButtonsVisibility(initialCheckedId, btnQQ, btn163)
         
         // ✅ 监听 RadioGroup 选择变化
         radioGroupProvider.setOnCheckedChangeListener { _, checkedId ->
             updateConfigButtonsVisibility(checkedId, btnQQ, btn163)
+            updateCardBorderColors(checkedId, cardQQ, card163)
         }
+        
+        // ✅ 初始化时更新卡片边框颜色
+        updateCardBorderColors(initialCheckedId, cardQQ, card163)
         
         // ✅ 为 QQ 邮箱卡片添加点击事件
         cardQQ.setOnClickListener {
@@ -920,6 +1053,25 @@ class EmailProviderFragment : SettingsGuideFragment() {
             R.id.radio163 -> {
                 btnQQ.visibility = View.GONE
                 btn163.visibility = View.VISIBLE
+            }
+        }
+    }
+    
+    /**
+     * ✅ 更新卡片边框颜色，选中时红色，未选中时灰色
+     */
+    private fun updateCardBorderColors(checkedId: Int, cardQQ: com.google.android.material.card.MaterialCardView, card163: com.google.android.material.card.MaterialCardView) {
+        val selectedColor = android.graphics.Color.parseColor("#ff6b6b") // 红色
+        val unselectedColor = android.graphics.Color.parseColor("#CBD5E1") // 灰色
+        
+        when (checkedId) {
+            R.id.radioQQ -> {
+                cardQQ.setStrokeColor(selectedColor)
+                card163.setStrokeColor(unselectedColor)
+            }
+            R.id.radio163 -> {
+                cardQQ.setStrokeColor(unselectedColor)
+                card163.setStrokeColor(selectedColor)
             }
         }
     }
@@ -1546,12 +1698,12 @@ class SleepMonitorFragment : SettingsGuideFragment() {
         val tvWakeHour = view.findViewById<TextView>(R.id.tvWakeHour)
         val tvWakeMinute = view.findViewById<TextView>(R.id.tvWakeMinute)
         val tvTolerance = view.findViewById<TextView>(R.id.tvTolerance)
-        val btnHourPlus = view.findViewById<Button>(R.id.btnWakeHourPlus)
-        val btnHourMinus = view.findViewById<Button>(R.id.btnWakeHourMinus)
-        val btnMinutePlus = view.findViewById<Button>(R.id.btnWakeMinutePlus)
-        val btnMinuteMinus = view.findViewById<Button>(R.id.btnWakeMinuteMinus)
-        val btnTolerancePlus = view.findViewById<Button>(R.id.btnTolerancePlus)
-        val btnToleranceMinus = view.findViewById<Button>(R.id.btnToleranceMinus)
+        val btnHourPlus = view.findViewById<android.widget.ImageButton>(R.id.btnWakeHourPlus)
+        val btnHourMinus = view.findViewById<android.widget.ImageButton>(R.id.btnWakeHourMinus)
+        val btnMinutePlus = view.findViewById<android.widget.ImageButton>(R.id.btnWakeMinutePlus)
+        val btnMinuteMinus = view.findViewById<android.widget.ImageButton>(R.id.btnWakeMinuteMinus)
+        val btnTolerancePlus = view.findViewById<android.widget.ImageButton>(R.id.btnTolerancePlus)
+        val btnToleranceMinus = view.findViewById<android.widget.ImageButton>(R.id.btnToleranceMinus)
         
         val prefsManager = PrefsManager(requireContext())
         switchSleep.isChecked = prefsManager.isSleepMonitorEnabled()
@@ -1765,9 +1917,6 @@ class GuardianTargetsFragment : SettingsGuideFragment() {
         
         val btnAddTarget = view.findViewById<android.widget.LinearLayout>(R.id.btnAddTarget)
         val tvHint = view.findViewById<TextView>(R.id.tvHint)
-        val tvListTitle = view.findViewById<TextView>(R.id.tvListTitle)
-        val tvMemberCount = view.findViewById<TextView>(R.id.tvMemberCount)
-        val llMembersList = view.findViewById<android.widget.LinearLayout>(R.id.llMembersList)
         val recyclerView = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerViewTargets)
         
         // 设置提示文本
@@ -1816,20 +1965,17 @@ class GuardianTargetsFragment : SettingsGuideFragment() {
     private fun updateUIVisibility() {
         val tvListTitle = view?.findViewById<TextView>(R.id.tvListTitle)
         val tvMemberCount = view?.findViewById<TextView>(R.id.tvMemberCount)
-        val llMembersList = view?.findViewById<android.widget.LinearLayout>(R.id.llMembersList)
         val recyclerView = view?.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerViewTargets)
         
         if (targetsList.isNotEmpty()) {
             tvListTitle?.visibility = View.VISIBLE
             tvMemberCount?.visibility = View.VISIBLE
             tvMemberCount?.text = "${targetsList.size} 个人"
-            llMembersList?.visibility = View.VISIBLE
             recyclerView?.visibility = View.VISIBLE
             adapter?.notifyDataSetChanged()
         } else {
             tvListTitle?.visibility = View.GONE
             tvMemberCount?.visibility = View.GONE
-            llMembersList?.visibility = View.GONE
             recyclerView?.visibility = View.GONE
         }
     }

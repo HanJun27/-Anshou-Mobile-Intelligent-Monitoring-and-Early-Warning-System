@@ -1,188 +1,338 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#F8F9FA">
 
-    <LinearLayout
+    <!-- Header - 采用模式选择界面的设计 -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:padding="16dp"
+        android:background="#FFFFFF">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="睡眠监测设置"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary"
-            android:layout_marginBottom="24dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_logo"
+                android:tint="#ff6b6b"/>
 
-        <com.google.android.material.card.MaterialCardView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LiveWell"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#ff6b6b"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvStepIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="第 9 步，共 10 步"
+            android:textColor="#808080"
+            android:textSize="14sp"/>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal"
+            android:paddingBottom="80dp">
 
-            <LinearLayout
+            <!-- Hero Section -->
+            <FrameLayout
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:background="@drawable/circle_primary_container"
+                android:layout_marginBottom="24dp"
+                android:elevation="8dp">
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_moon_custom"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="睡眠监测设置"
+                android:textColor="#191C1D"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="智能监测您的睡眠状态"
+                android:textColor="#584140"
+                android:textSize="18sp"
+                android:alpha="0.8"
+                android:layout_marginBottom="40dp" />
+
+            <!-- Toggle Card -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switchSleepMonitor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="开启睡眠监测"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="16dp"/>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/divider"
-                    android:layout_marginBottom="16dp"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="预设起床时间"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="12dp"/>
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
+                    android:padding="24dp"
                     android:gravity="center_vertical">
 
-                    <Button
-                        android:id="@+id/btnWakeHourMinus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
-                    <TextView
-                        android:id="@+id/tvWakeHour"
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:text="06"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"/>
-
-                    <Button
-                        android:id="@+id/btnWakeHourPlus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=":"
-                        android:textSize="24sp"
-                        android:textColor="@color/text_primary"
-                        android:layout_marginHorizontal="4dp"/>
-
-                    <Button
-                        android:id="@+id/btnWakeMinuteMinus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
-                    <TextView
-                        android:id="@+id/tvWakeMinute"
-                        android:layout_width="44dp"
-                        android:layout_height="wrap_content"
-                        android:text="00"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"/>
-
-                    <Button
-                        android:id="@+id/btnWakeMinutePlus"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="@android:color/black"
-                        android:includeFontPadding="false"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="容忍时间（小时）"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="12dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <Button
-                        android:id="@+id/btnToleranceMinus"
-                        android:layout_width="56dp"
+                    <ImageView
+                        android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:text="-"
-                        android:textSize="20sp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
+                        android:src="@drawable/ic_sleep_monitor"
+                        android:background="@drawable/bg_circle_white"
+                        android:padding="8dp" />
 
                     <TextView
-                        android:id="@+id/tvTolerance"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="2"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"/>
+                        android:layout_marginStart="16dp"
+                        android:text="开启睡眠监测"
+                        android:textColor="#191C1D"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                    <Button
-                        android:id="@+id/btnTolerancePlus"
-                        android:layout_width="56dp"
-                        android:layout_height="48dp"
-                        android:text="+"
-                        android:textSize="20sp"
-                        android:textColor="?android:attr/textColorPrimary"
-                        style="@style/Widget.Material3.Button.TonalButton"/>
-
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchSleepMonitor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
+            <!-- Time Picker Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp">
 
-        </com.google.android.material.card.MaterialCardView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
 
-    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="24dp">
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_wake_time"
+                            android:background="@drawable/bg_circle_white"
+                            android:padding="8dp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="预设起床时间"
+                            android:textColor="#191C1D"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-</ScrollView>
+                    <!-- 时间选择器 - 水平和分钟在同一行 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_low_rounded"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:gravity="center">
+                        
+                        <!-- 小时控制 -->
+                        <ImageButton
+                            android:id="@+id/btnWakeHourMinus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/btn_white_rounded"
+                            android:src="@drawable/ic_minus" />
+                        
+                        <TextView
+                            android:id="@+id/tvWakeHour"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:text="06"
+                            android:textColor="#191C1D"
+                            android:textSize="36sp"
+                            android:textStyle="bold"
+                            android:gravity="center" />
+                        
+                        <ImageButton
+                            android:id="@+id/btnWakeHourPlus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/btn_white_rounded"
+                            android:src="@drawable/ic_plus" />
+                        
+                        <!-- 分隔符 -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=":"
+                            android:textSize="36sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginHorizontal="8dp"
+                            android:gravity="center" />
+                        
+                        <!-- 分钟控制 -->
+                        <ImageButton
+                            android:id="@+id/btnWakeMinuteMinus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/btn_white_rounded"
+                            android:src="@drawable/ic_minus" />
+                        
+                        <TextView
+                            android:id="@+id/tvWakeMinute"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:text="00"
+                            android:textColor="#191C1D"
+                            android:textSize="36sp"
+                            android:textStyle="bold"
+                            android:gravity="center" />
+                        
+                        <ImageButton
+                            android:id="@+id/btnWakeMinutePlus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/btn_white_rounded"
+                            android:src="@drawable/ic_plus" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Tolerance Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="24dp">
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_tolerance"
+                            android:background="@drawable/bg_circle_white"
+                            android:padding="8dp" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginStart="16dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="容差范围"
+                                android:textColor="#191C1D"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="TOLERANCE WINDOW"
+                                android:textColor="#584140"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <ImageButton
+                            android:id="@+id/btnToleranceMinus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/btn_outline_circle"
+                            android:src="@drawable/ic_minus" />
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center">
+                            <TextView
+                                android:id="@+id/tvTolerance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="2"
+                                android:textColor="#ff6b6b"
+                                android:textSize="36sp"
+                                android:textStyle="bold" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="HOURS"
+                                android:textColor="#584140"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                        <ImageButton
+                            android:id="@+id/btnTolerancePlus"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/btn_outline_circle"
+                            android:src="@drawable/ic_plus" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

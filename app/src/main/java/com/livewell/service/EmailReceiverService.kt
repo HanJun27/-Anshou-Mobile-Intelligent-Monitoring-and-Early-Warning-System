@@ -160,6 +160,8 @@ class EmailReceiverService : Service() {
     private fun checkForAlertEmails() {
         val mode = prefsManager.getAppMode()
         Log.d(tag, "开始检查邮件，当前模式：$mode")
+        // ✅ 写入文件日志
+        com.livewell.untils.AppLogger.i(tag, "📬 开始检查警报邮件")
         
         //  所有模式都检查邮件，不做限制
         // 如果是被守护模式（guardian），也会检查邮件（用于测试或其他用途）
@@ -279,6 +281,8 @@ class EmailReceiverService : Service() {
                     if (checkIfAlertEmail(message)) {  // 返回是否找到警报
                         newAlertCount++
                         Log.i(tag, "发现警报邮件 #${newAlertCount}")
+                        // ✅ 写入文件日志
+                        com.livewell.untils.AppLogger.i(tag, "📧 发现警报邮件 #${newAlertCount}")
                     }
                 } else {
                     Log.d(tag, "跳过已检查的邮件 [${i + 1}/${messages.size}]")
@@ -357,6 +361,8 @@ class EmailReceiverService : Service() {
             
             if (isAlert) {
                 Log.i(tag, " 检测到警报邮件！主题：$subject，发件人：$from")
+                // ✅ 写入文件日志
+                com.livewell.untils.AppLogger.i(tag, "📧 检测到警报邮件：$subject")
                 sendEnhancedNotification(subject, content, from)
                 parseAndSaveGuardianAlert(subject, content, from)
                 true

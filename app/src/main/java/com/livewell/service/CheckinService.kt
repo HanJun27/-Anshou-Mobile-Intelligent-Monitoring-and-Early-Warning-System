@@ -91,6 +91,14 @@ class CheckinService : Service() {
 
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // ✅ 处理超时触发的警报
+        if (intent?.action == "TRIGGER_ALERT") {
+            Log.i(tag, "收到 TRIGGER_ALERT 指令，立即触发警报")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "⏰ 报警确认超时，触发真正警报")
+            triggerAlert()
+        }
+        
         return START_STICKY
     }
     
@@ -160,6 +168,8 @@ class CheckinService : Service() {
     
        private fun triggerAlert() {
          Log.i(tag, "====== 触发警报 ======")
+    // ✅ 写入文件日志
+    com.livewell.untils.AppLogger.i(tag, "🚨 触发签到警报")
     val notifyType = prefsManager.getNotifyType()
     val reason = buildAlertReason()
          Log.i(tag, "通知方式：$notifyType")
@@ -172,13 +182,14 @@ class CheckinService : Service() {
     when (notifyType) {
         PrefsManager.NOTIFY_PHONE -> {
              Log.i(tag, "准备发送短信")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "📱 准备发送签到警报短信")
             val contact = prefsManager.getEmergencyContact()
             val message = prefsManager.getAlertMessage()
             if (!contact.isNullOrEmpty()) {
                 sendSmsAlert(contact, message)
-                // ✅ 获取当前步数和使用时长
-                val currentSteps = com.livewell.untils.SystemStepManager.getInstance(this@CheckinService).getTodaySteps()
-                val usageMinutes = com.livewell.untils.UsageStatsHelper(this@CheckinService).getTodayAppUsageMinutes()
+                // ✅ 获取当前步数和使用时长（考虑跨天）
+                val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this@CheckinService)
                 
                 prefsManager.addAlertHistory(AlertHistoryRecord(
                     timestamp = System.currentTimeMillis(),
@@ -187,17 +198,18 @@ class CheckinService : Service() {
                     method = AlertMethod.SMS,
                     content = message.take(50),
                     reason = reason,
-                    steps = currentSteps.toInt(),  // ✅ 转换为 Int
-                    usageMinutes = usageMinutes.toInt()  // ✅ 转换为 Int
+                    steps = currentSteps,  // ✅ 已经是 Int
+                    usageMinutes = usageMinutes  // ✅ 已经是 Int
                 ))
             }
         }
         PrefsManager.NOTIFY_EMAIL -> {
              Log.i(tag, "准备发送邮件") 
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "📧 准备发送签到警报邮件") 
             sendEmailAlert()
-            // ✅ 获取当前步数和使用时长
-            val currentSteps = com.livewell.untils.SystemStepManager.getInstance(this@CheckinService).getTodaySteps()
-            val usageMinutes = com.livewell.untils.UsageStatsHelper(this@CheckinService).getTodayAppUsageMinutes()
+            // ✅ 获取当前步数和使用时长（考虑跨天）
+            val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this@CheckinService)
             
             prefsManager.addAlertHistory(AlertHistoryRecord(
                 timestamp = System.currentTimeMillis(),
@@ -206,8 +218,8 @@ class CheckinService : Service() {
                 method = AlertMethod.EMAIL,
                 content = prefsManager.getAlertMessage().take(50),
                 reason = reason,
-                steps = currentSteps.toInt(),
-                usageMinutes = usageMinutes.toInt()
+                steps = currentSteps,
+                usageMinutes = usageMinutes
             ))
         }
         PrefsManager.NOTIFY_BOTH -> {
@@ -246,15 +258,14 @@ private fun buildAlertReason(): String {
         }
     }
     
-    // 今日使用时长检测
-    val todayUsage = usageStatsHelper.getTodayAppUsageMinutes()
+    // 今日使用时长检测（✅ 使用新的方法获取考虑跨天的数据）
+    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
     val usageThreshold = prefsManager.getAppUsageThreshold()
     if (todayUsage < usageThreshold) {
         reasons.add("今日使用${todayUsage}min < ${usageThreshold}min")
     }
     
     // 步数检测
-    val stepCount = getTodayStepCount()
     val stepThreshold = prefsManager.getStepThreshold()
     if (prefsManager.isStepMonitorEnabled() && stepCount < stepThreshold) {
         reasons.add("步数${stepCount} < ${stepThreshold}")
@@ -276,9 +287,8 @@ private fun performSafetyCheck() {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val lastCheckin = prefsManager.getLastCheckinDate()
     
-    // ✅ 获取今日使用时长和步数
-    val todayUsage = usageStatsHelper.getTodayAppUsageMinutes()
-    val stepCount = getTodayStepCount()
+    // ✅ 获取今日使用时长和步数（考虑跨天睡眠）
+    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
     
     val usageThreshold = prefsManager.getAppUsageThreshold()
     val stepThreshold = prefsManager.getStepThreshold()
@@ -565,6 +575,8 @@ private fun getAdaptiveThresholds(): Pair<Int, Int> {
 
 
 private fun sendConfirmNotification() {
+    Log.i(tag, "====== 发送确认通知 ======")
+    
     // 检查是否在稍后提醒时间内
     val snoozeTime = prefsManager.getSnoozeTime()
     if (snoozeTime > System.currentTimeMillis()) {
@@ -619,15 +631,51 @@ private fun sendConfirmNotification() {
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     manager.notify(1003, notification)
     
+    // ✅ 重置确认状态
     prefsManager.setUserConfirmed(false)
+    prefsManager.setSnoozeRequested(false)
     
+    // ✅ 使用 AlarmManager 设置超时闹钟（而不是 Handler）
     val duration = prefsManager.getAlertDuration()
-    val handler = Handler(Looper.getMainLooper())
-    handler.postDelayed({
-        if (!prefsManager.isUserConfirmed() && !prefsManager.isSnoozeRequested()) {
-            triggerAlert()
+    val timeoutTime = System.currentTimeMillis() + duration * 60 * 1000L
+    
+    Log.i(tag, "设置超时闹钟：${duration}分钟后（${android.icu.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(timeoutTime)}）")
+    
+    scheduleAlertTimeoutAlarm(timeoutTime)
+}
+
+private fun scheduleAlertTimeoutAlarm(timeoutTime: Long) {
+    val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+    
+    // ✅ 创建超时触发的 Intent
+    val intent = Intent(this, com.livewell.receiver.AlertTimeoutReceiver::class.java).apply {
+        action = "com.livewell.ACTION_ALERT_TIMEOUT"
+    }
+    
+    val pendingIntent = android.app.PendingIntent.getBroadcast(
+        this, 3002, intent,
+        android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+    )
+    
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                android.app.AlarmManager.RTC_WAKEUP,
+                timeoutTime,
+                pendingIntent
+            )
+            Log.i(tag, "✅ 超时闹钟已设置")
+        } else {
+            alarmManager.setExact(
+                android.app.AlarmManager.RTC_WAKEUP,
+                timeoutTime,
+                pendingIntent
+            )
+            Log.i(tag, "✅ 超时闹钟已设置（旧版本）")
         }
-    }, duration * 60 * 1000L)
+    } catch (e: Exception) {
+        Log.e(tag, "❌ 设置超时闹钟失败：${e.message}")
+    }
 }
 
 private fun getAverageBootTime(): Long {
@@ -648,8 +696,8 @@ private fun getAverageAppUsage(): Long {
  * 生成守护对象状态信息（步数和使用时长）
  */
 private fun generateGuardianStatusInfo(): String {
-    val todayUsage = usageStatsHelper.getTodayAppUsageMinutes()
-    val stepCount = getTodayStepCount()
+    // ✅ 使用新的方法获取考虑跨天的数据
+    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
     val stepThreshold = prefsManager.getStepThreshold()
     
     val info = StringBuilder()
@@ -690,11 +738,10 @@ private fun generateExceptionReport(): String {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val lastCheckin = prefsManager.getLastCheckinDate()
     
-    // ✅ 改为今日使用时长
-    val todayUsage = usageStatsHelper.getTodayAppUsageMinutes()
+    // ✅ 改为今日使用时长（考虑跨天）
+    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
     val usageThreshold = prefsManager.getAppUsageThreshold()
     
-    val stepCount = getTodayStepCount()
     val stepThreshold = prefsManager.getStepThreshold()
     
     val report = StringBuilder()

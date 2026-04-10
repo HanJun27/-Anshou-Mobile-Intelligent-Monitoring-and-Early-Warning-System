@@ -143,6 +143,9 @@ class SleepMonitorService : Service(), SensorEventListener {
             
             // ✅ 初始化批量保存时间
             lastBatchSaveTime = System.currentTimeMillis()
+            
+            // ✅ 启动定期活动快照任务（每 5 分钟）
+            startPeriodicActivitySnapshot()
 
             // ✅ 检查是否在睡眠时段，决定启动哪些传感器
             if (isWithinSleepTimeWindow()) {
@@ -158,6 +161,8 @@ class SleepMonitorService : Service(), SensorEventListener {
             }
             
             Log.i(tag, "✅ 睡眠监测服务初始化完成")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "🚀 睡眠监测服务已启动")
         } catch (e: Exception) {
             Log.e(tag, "❌ 睡眠监测服务启动失败", e)
             throw e  // 重新抛出，让系统知道启动失败
@@ -353,6 +358,10 @@ class SleepMonitorService : Service(), SensorEventListener {
         val stepThreshold = prefsManager.getSleepStepThreshold()
         val mode = prefsManager.getSleepMode()
 
+        // ✅ 添加详细日志
+        Log.d(tag, "🔍 入睡检测 - 步数=$currentSteps, 阈值=$stepThreshold, 模式=$mode")
+        Log.d(tag, "   屏幕关闭时长=${(System.currentTimeMillis() - lastScreenOffTime) / 1000}秒")
+
         // 计算步数增长
         val stepIncrease = currentSteps - lastStepCount
 
@@ -363,6 +372,8 @@ class SleepMonitorService : Service(), SensorEventListener {
             motionlessStartTime = 0
             consecutiveSleepChecks = 0 // ✅ 重置计数器
             Log.d(tag, "检测到步数增长$stepIncrease，重置入睡候选")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.d(tag, "❌ 步数增加${stepIncrease}步，取消入睡判定")
             return
         }
 
@@ -373,22 +384,31 @@ class SleepMonitorService : Service(), SensorEventListener {
         val screenOffDuration = System.currentTimeMillis() - lastScreenOffTime
 
         if (screenOffDuration < inactiveThreshold) {
+            Log.d(tag, "⏱️ 屏幕关闭时长不足：${screenOffDuration / 1000}秒 < ${inactiveThreshold / 1000}秒")
             return // 屏幕关闭时间还不够
         }
+        
+        Log.d(tag, "✅ 屏幕关闭时长满足：${screenOffDuration / 1000}秒 >= ${inactiveThreshold / 1000}秒")
 
         // 根据模式决定是否使用加速度计验证
         if (mode == "balanced") {
+            Log.d(tag, "🔬 均衡模式：需要加速度计验证")
             // 均衡模式：需要加速度计验证
             if (motionlessStartTime == 0L) {
                 // 开始加速度监测
                 startAccelerometerMonitoring()
                 motionlessStartTime = System.currentTimeMillis()
+                Log.d(tag, "   启动加速度监测，等待无体动...")
             } else {
                 // 检查无体动持续时间
                 val motionlessDuration = System.currentTimeMillis() - lastMotionTime
+                Log.d(tag, "   无体动时长=${motionlessDuration / 1000}秒, 阈值=${inactiveThreshold / 1000}秒")
                 if (motionlessDuration >= inactiveThreshold) {
                     // ✅ 新增：需要连续 2 次检查都满足条件才确认入睡
                     consecutiveSleepChecks++
+                    Log.d(tag, "✅ 第${consecutiveSleepChecks}次连续检查通过")
+                    // ✅ 写入文件日志
+                    com.livewell.untils.AppLogger.d(tag, "🔍 入睡检测第${consecutiveSleepChecks}次通过")
                     if (consecutiveSleepChecks >= 2) {
                         Log.i(tag, "✅ 连续${consecutiveSleepChecks}次检查满足入睡条件，确认入睡")
                         confirmSleep()
@@ -398,12 +418,15 @@ class SleepMonitorService : Service(), SensorEventListener {
                 }
             }
         } else {
+            Log.d(tag, "⚡ 省电模式：仅基于屏幕和步数判定")
             // 省电模式：仅基于屏幕和步数判定
             if (possibleSleepStartTime == 0L) {
                 possibleSleepStartTime = lastScreenOffTime
+                Log.d(tag, "   记录可能入睡时间：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(possibleSleepStartTime))}")
             }
 
             val totalInactiveTime = System.currentTimeMillis() - possibleSleepStartTime
+            Log.d(tag, "   总无活动时长=${totalInactiveTime / 1000}秒, 阈值=${inactiveThreshold / 1000}秒")
             if (totalInactiveTime >= inactiveThreshold) {
                 // ✅ 同样需要连续验证
                 consecutiveSleepChecks++
@@ -779,12 +802,18 @@ class SleepMonitorService : Service(), SensorEventListener {
      * 确认入睡
      */
     private fun confirmSleep() {
-        confirmedSleepStartTime = System.currentTimeMillis()
+        val sleepTime = System.currentTimeMillis()
+        confirmedSleepStartTime = sleepTime
         possibleSleepStartTime = 0
         motionlessStartTime = 0
         consecutiveSleepChecks = 0 // ✅ 重置计数器
 
-        Log.i(tag, "确认入睡时间：${Date(confirmedSleepStartTime)}")
+        Log.i(tag, "确认入睡时间：${Date(sleepTime)}")
+        // ✅ 写入文件日志
+        com.livewell.untils.AppLogger.i(tag, "✅ 确认入睡：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(sleepTime))}")
+        
+        // ✅ 记录睡前数据快照（用于解决跨天问题）
+        recordPreSleepDataSnapshot(sleepTime)
                 
         // ✅ 保存状态到 PrefsManager（用于服务重启恢复）
         prefsManager.saveLong("confirmed_sleep_start_time", confirmedSleepStartTime)
@@ -928,10 +957,16 @@ class SleepMonitorService : Service(), SensorEventListener {
             false
         }
         
+        // ✅ 添加详细日志
+        Log.d(tag, "🔍 醒来检测 - 步数增加=$stepIncrease, 屏幕=${if (isScreenOn) "亮" else "灭"}, 模式=$mode")
+        Log.d(tag, "   步数阈值=${stepThreshold * 0.5f}, 屏幕时长=${screenOnDuration / 1000}秒, 有体动=$motionDetected")
+        
         // ✅ 三重判定条件（降低阈值提高灵敏度）
         val wakeUpByStep = stepIncrease > stepThreshold * 0.5f  // ✅ 降低 50%
         val wakeUpByScreen = isScreenOn && screenOnDuration > 3000  // ✅ 3 秒即可
         val wakeUpByMotion = motionDetected  // 30 秒内有明显体动
+        
+        Log.d(tag, "   判定结果 - 步数=$wakeUpByStep, 屏幕=$wakeUpByScreen, 体动=$wakeUpByMotion")
         
         // ✅ 任一条件满足即判定为醒来
         val isWakeUp = wakeUpByStep || wakeUpByScreen || wakeUpByMotion
@@ -941,6 +976,8 @@ class SleepMonitorService : Service(), SensorEventListener {
         val presetWakeTime = getTodayPresetWakeTime()
         if (System.currentTimeMillis() > presetWakeTime + toleranceHours * 60 * 60 * 1000L) {
             Log.i(tag, "⏰ 已超过预设起床时间 +${toleranceHours}小时，强制判定为醒来")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "⏰ 超过预设起床时间+${toleranceHours}h，强制醒来")
             forceWakeUp()
             return
         }
@@ -952,6 +989,8 @@ class SleepMonitorService : Service(), SensorEventListener {
             // ✅ 再判断睡眠时长（可调整为 2 小时）
             if (sleepDuration < 2 * 60 * 60 * 1000L) {
                 Log.i(tag, "睡眠时长过短 (${sleepDuration / 1000 / 60}分钟)，视为误判，继续监测")
+                // ✅ 写入文件日志
+                com.livewell.untils.AppLogger.w(tag, "⚠️ 睡眠时长仅${sleepDuration / 1000 / 60}分钟，视为误判")
                 confirmedSleepStartTime = 0
                 latestWakeUpAlarmScheduled = false
                 lastStepCount = currentSteps
@@ -964,6 +1003,10 @@ class SleepMonitorService : Service(), SensorEventListener {
                 if (wakeUpByScreen) append("屏幕亮起 (${screenOnDuration / 1000}秒) ")
                 if (wakeUpByMotion) append("检测到体动 ")
             }
+            
+            Log.i(tag, "✅ 醒来判定成功 - 原因：$wakeUpReason")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "✅ 检测到醒来：${SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(wakeTime))}, 原因=$wakeUpReason, 时长=${sleepDuration / 1000 / 60}分钟")
             
             // 记录睡眠数据
             recordSleepData(confirmedSleepStartTime, wakeTime, sleepDuration)
@@ -981,6 +1024,8 @@ class SleepMonitorService : Service(), SensorEventListener {
             prefsManager.saveLong("cached_sleep_start_time", 0)  // ✅ 新增：清除缓存
             
             Log.i(tag, "✅ 醒来判定成功 - 原因：$wakeUpReason, 醒来时间：${Date(wakeTime)}, 睡眠时长：${sleepDuration / 1000 / 60}分钟")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "✅ 检测到醒来：${SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(wakeTime))}, 睡眠时长=${sleepDuration / 1000 / 60}分钟")
             
             // 检查是否超过正常起床时间
             checkWakeUpAbnormal(wakeTime)
@@ -1161,9 +1206,8 @@ class SleepMonitorService : Service(), SensorEventListener {
 
         // 记录发送尝试（在发送前记录）
         val notifyType = prefsManager.getNotifyType()
-        // ✅ 获取当前步数和使用时长
-        val currentSteps = com.livewell.untils.SystemStepManager.getInstance(this@SleepMonitorService).getTodaySteps()
-        val usageMinutes = com.livewell.untils.UsageStatsHelper(this@SleepMonitorService).getTodayAppUsageMinutes()
+        // ✅ 获取当前步数和使用时长（考虑跨天）
+        val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this@SleepMonitorService)
                 
         prefsManager.addAlertHistory(
             AlertHistoryRecord(
@@ -1190,6 +1234,16 @@ class SleepMonitorService : Service(), SensorEventListener {
 
         // 发送报告
         sendReport(report.toString())
+        // ✅ 写入文件日志
+        com.livewell.untils.AppLogger.i(tag, "📧 已发送起床异常警报")
+        
+        // ✅ 记录睡眠数据用于学习（只有当 confirmedSleepStartTime 有效时）
+        if (confirmedSleepStartTime > 0) {
+            recordSleepData(confirmedSleepStartTime, wakeTime, sleepDuration)
+            Log.i(tag, "睡眠数据已记录：入睡=${confirmedSleepStartTime}, 醒来=${wakeTime}, 时长=${sleepDuration}ms")
+        } else {
+            Log.w(tag, "无法记录睡眠数据：confirmedSleepStartTime 无效")
+        }
     }
 
     /**
@@ -1269,6 +1323,12 @@ class SleepMonitorService : Service(), SensorEventListener {
                 "${timeFormat.format(Date(sleepTime))},${timeFormat.format(Date(wakeTime))}"
 
         prefsManager.saveSleepRecord(record)
+        
+        Log.i(tag, "✅ 睡眠记录已保存：")
+        Log.i(tag, "   原始数据：$record")
+        Log.i(tag, "   入睡时间：${dateFormat.format(Date(sleepTime))} ${timeFormat.format(Date(sleepTime))}")
+        Log.i(tag, "   醒来时间：${dateFormat.format(Date(wakeTime))} ${timeFormat.format(Date(wakeTime))}")
+        Log.i(tag, "   睡眠时长：${duration / 1000 / 60} 分钟")
     }
 
     /**
@@ -1287,9 +1347,8 @@ class SleepMonitorService : Service(), SensorEventListener {
      * 生成守护对象状态信息（步数和使用时长）
      */
     private fun generateGuardianStatusInfo(): String {
-        val usageStatsHelper = com.livewell.untils.UsageStatsHelper(this)
-        val todayUsage = usageStatsHelper.getTodayAppUsageMinutes()
-        val stepCount = getCurrentStepCount()
+        // ✅ 使用新的方法获取考虑跨天的数据
+        val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this)
         val stepThreshold = prefsManager.getStepThreshold()
         
         val info = StringBuilder()
@@ -1430,9 +1489,8 @@ class SleepMonitorService : Service(), SensorEventListener {
     
         val report = buildOverSleepReport(sleepDuration, presetHour, presetMinute, toleranceHours)
             
-        // ✅ 获取当前步数和使用时长
-        val currentSteps = getCurrentStepCount()
-        val usageMinutes = UsageStatsHelper(this).getTodayAppUsageMinutes()
+        // ✅ 获取当前步数和使用时长（考虑跨天）
+        val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this)
     
         // 记录警报历史
         val notifyType = prefsManager.getNotifyType()
@@ -1446,7 +1504,7 @@ class SleepMonitorService : Service(), SensorEventListener {
                     "email" -> AlertMethod.EMAIL
                     else -> AlertMethod.NOTIFICATION
                 },
-                content = "超时睡眠：${sleepDuration / 1000 / 60}分钟",
+                content = "已持续睡眠 ${sleepDuration / 1000 / 60} 分钟",
                 reason = "超过预设起床时间 +${toleranceHours}小时仍未起床",
                 steps = currentSteps,  // ✅ 记录步数
                 usageMinutes = usageMinutes.toInt()  // ✅ 转换为 Int
@@ -1456,11 +1514,18 @@ class SleepMonitorService : Service(), SensorEventListener {
         // 发送报告
         sendReport(report)
     
+        // ✅ 记录睡眠数据用于学习
+        val wakeTime = System.currentTimeMillis()
+        recordSleepData(confirmedSleepStartTime, wakeTime, sleepDuration)
+        Log.i(tag, "睡眠数据已记录：入睡=${confirmedSleepStartTime}, 醒来=${wakeTime}, 时长=${sleepDuration}ms")
+    
         // 重置睡眠状态（防止重复报警）
         confirmedSleepStartTime = 0
         latestWakeUpAlarmScheduled = false
     
         Log.i(tag, "超时睡眠警报已发送")
+        // ✅ 写入文件日志
+        com.livewell.untils.AppLogger.i(tag, "📧 已发送超时睡眠警报：${sleepDuration / 1000 / 60}分钟")
     }
 
     /**
@@ -1753,6 +1818,90 @@ class SleepMonitorService : Service(), SensorEventListener {
             Log.i(tag, "📅 邮件重试已调度：${android.icu.text.SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(retryTime)}")
         } catch (e: Exception) {
             Log.e(tag, "调度邮件重试失败", e)
+        }
+    }
+    
+    // ==================== 睡前快照相关功能 ====================
+    
+    /**
+     * ✅ 启动定期活动快照任务（每 5 分钟）
+     */
+    private fun startPeriodicActivitySnapshot() {
+        executor.scheduleAtFixedRate({
+            try {
+                if (confirmedSleepStartTime <= 0) {
+                    // 只在未入睡时更新
+                    val currentSteps = getCurrentStepCount()
+                    val currentUsage = UsageStatsHelper(this).getTodayAppUsageMinutes().toInt()
+                    
+                    prefsManager.saveLastActiveState(
+                        steps = currentSteps,
+                        usageMinutes = currentUsage,
+                        timestamp = System.currentTimeMillis()
+                    )
+                    
+                    Log.d(tag, "📸 活动快照已保存：步数=$currentSteps, 使用时长=${currentUsage}分钟")
+                }
+            } catch (e: Exception) {
+                Log.e(tag, "❌ 保存活动快照失败：${e.message}", e)
+            }
+        }, 0, 5, java.util.concurrent.TimeUnit.MINUTES)
+        
+        Log.i(tag, "✅ 定期活动快照任务已启动（每 5 分钟）")
+    }
+    
+    /**
+     * ✅ 记录睡前数据快照（解决跨天问题）
+     * 在用户入睡时，保存当前的步数和使用时长作为"前一天"的最终数据
+     */
+    private fun recordPreSleepDataSnapshot(sleepTime: Long) {
+        try {
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val yesterday = Calendar.getInstance().apply {
+                time = Date(sleepTime)
+                add(Calendar.DAY_OF_YEAR, -1)
+            }
+            val yesterdayStr = dateFormat.format(yesterday.time)
+            
+            // 优先使用最近的活动快照，而不是实时数据
+            val lastActiveState = prefsManager.getLastActiveState()
+            val (lastActiveSteps, lastActiveUsage, lastActiveTime) = lastActiveState
+            
+            // 如果最近 10 分钟内有活动记录，使用它（更准确）
+            val useSnapshot = (System.currentTimeMillis() - lastActiveTime) < 10 * 60 * 1000
+            
+            val stepsToSave = if (useSnapshot && lastActiveSteps > 0) {
+                lastActiveSteps
+            } else {
+                getCurrentStepCount()
+            }
+            
+            val usageToSave = if (useSnapshot && lastActiveUsage > 0) {
+                lastActiveUsage
+            } else {
+                UsageStatsHelper(this).getTodayAppUsageMinutes().toInt()
+            }
+            
+            // 保存睡前快照
+            prefsManager.savePreSleepSnapshot(
+                date = yesterdayStr,
+                steps = stepsToSave,
+                usageMinutes = usageToSave,
+                sleepTime = sleepTime
+            )
+            
+            // 清理旧快照
+            prefsManager.cleanupOldSnapshots(yesterdayStr)
+            
+            Log.i(tag, "✅ 睡前数据快照已保存：")
+            Log.i(tag, "   日期：$yesterdayStr")
+            Log.i(tag, "   步数：$stepsToSave 步")
+            Log.i(tag, "   使用时长：$usageToSave 分钟")
+            Log.i(tag, "   入睡时间：${dateFormat.format(Date(sleepTime))}")
+            Log.i(tag, "   数据来源：${if (useSnapshot) "活动快照" else "实时数据"}")
+            
+        } catch (e: Exception) {
+            Log.e(tag, "❌ 保存睡前数据快照失败：${e.message}", e)
         }
     }
 }

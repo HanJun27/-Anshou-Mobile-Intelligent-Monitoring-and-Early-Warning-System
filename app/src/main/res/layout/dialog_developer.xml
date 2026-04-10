@@ -631,6 +631,49 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- ✅ 新增：睡眠快照记录查看 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="睡眠快照记录"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="查看睡前数据快照，用于跨天活动数据计算"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="12dp"/>
+
+                <Button
+                    android:id="@+id/btnViewSleepSnapshots"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="查看快照记录"
+                    android:textSize="14sp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- ✅ 新增：无声音乐频率测试 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

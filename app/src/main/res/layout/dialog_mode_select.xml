@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:maxHeight="600dp">
@@ -8,167 +9,387 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
+        <!-- Description Text -->
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="选择应用工作模式"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginBottom="16dp"/>
-
-        <RadioGroup
-            android:id="@+id/radioGroupMode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
+            android:text="请根据您的当前环境和安全需求选择合适的工作模式。守护者系统将实时调整防护策略。"
+            android:textColor="#71717A"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="24dp" />
 
-            <RadioButton
-                android:id="@+id/radioGuardian"
+        <!-- Mode Cards Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Mode Card: Guardian (被守护模式) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardGuardian"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="被守护模式"
-                android:textSize="16sp"
-                android:padding="12dp"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="#E0E0E0"
+                app:cardBackgroundColor="#F9F9F9"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp"
+                    android:gravity="center_vertical">
+                    
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp">
+                        
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_icon_red_light" />
+                        
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_alert"
+                            android:scaleType="centerInside" />
+                    </FrameLayout>
+                        
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="被守护模式"
+                            android:textStyle="bold"
+                            android:textColor="#18181B"
+                            android:textSize="18sp" />
+                            
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="监测本机用户状态，失能时发送警报给紧急联系人。"
+                            android:textColor="#71717A"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            <TextView
+            <!-- Mode Card: Receiver (守护模式) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardReceiver"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="• 监测本机用户状态，失能时发送警报给紧急联系人"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginStart="32dp"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="#E0E0E0"
+                app:cardBackgroundColor="#F9F9F9"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp"
+                    android:gravity="center_vertical">
+                    
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp">
+                        
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_icon_blue_light" />
+                        
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_guardian"
+                            android:scaleType="centerInside" />
+                    </FrameLayout>
+                        
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="守护模式"
+                            android:textStyle="bold"
+                            android:textColor="#18181B"
+                            android:textSize="18sp" />
+                            
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="定期检测邮箱，接收他人发来的警报。"
+                            android:textColor="#71717A"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            <RadioButton
-                android:id="@+id/radioReceiver"
+            <!-- Mode Card: Mixed (混合模式) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardMixed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="守护模式"
-                android:textSize="16sp"
-                android:padding="12dp"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="#E0E0E0"
+                app:cardBackgroundColor="#F9F9F9"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp"
+                    android:gravity="center_vertical">
+                    
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp">
+                        
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_icon_purple_light" />
+                        
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_mixed_mode"
+                            android:scaleType="centerInside" />
+                    </FrameLayout>
+                        
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="混合模式"
+                            android:textStyle="bold"
+                            android:textColor="#18181B"
+                            android:textSize="18sp" />
+                            
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="同时具备被守护和守护功能。"
+                            android:textColor="#71717A"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            <TextView
+            <!-- Mode Card: Community (社区守护模式) - 默认选中示例 -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardCommunity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="• 定期检测邮箱，接收他人发来的警报"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginStart="32dp"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="#F87171"
+                app:cardBackgroundColor="#FEF2F2"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+                
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="20dp">
+                    
+                    <FrameLayout
+                        android:id="@+id/iconBg"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+                        
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_icon_green_light" />
+                        
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_community"
+                            android:scaleType="centerInside" />
+                    </FrameLayout>
+                        
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp"
+                        android:orientation="vertical"
+                        app:layout_constraintEnd_toStartOf="@+id/checkIcon"
+                        app:layout_constraintStart_toEndOf="@+id/iconBg"
+                        app:layout_constraintTop_toTopOf="parent">
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="社区守护模式"
+                            android:textStyle="bold"
+                            android:textColor="#18181B"
+                            android:textSize="18sp" />
+                            
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="加入互助社区，享受去中心化的群体安全保障。"
+                            android:textColor="#71717A"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/checkIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_check_circle"
+                        app:tint="#F87171"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+        <!-- Community Config Section (默认隐藏) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/communitySettingsPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#D1FAE5"
+            app:cardBackgroundColor="#ECFDF5">
             
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="• 收到警报时发出强化通知"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginStart="32dp"
-                android:layout_marginBottom="16dp"/>
-
-            <RadioButton
-                android:id="@+id/radioMixed"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="被守护 + 守护混合模式"
-                android:textSize="16sp"
-                android:padding="12dp"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="• 同时具备守护和接收功能"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginStart="32dp"
-                android:layout_marginBottom="16dp"/>
-
-            <!-- 社区守护模式 -->
-            <RadioButton
-                android:id="@+id/radioCommunity"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="社区守护模式"
-                android:textSize="16sp"
-                android:padding="12dp"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="• 除发送警报外，同时向社区平台上报数据"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginStart="32dp"
-                android:layout_marginBottom="8dp"/>
-            
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="• 社区工作人员可实时查看健康数据"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginStart="32dp"
-                android:layout_marginBottom="8dp"/>
-
-            <!-- 社区守护模式专属配置面板（默认隐藏） -->
             <LinearLayout
-                android:id="@+id/communitySettingsPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="gone"
-                android:background="@color/primary_light"
-                android:padding="12dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
+                android:padding="20dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="社区配置"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="12dp"/>
-
-                <Button
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+                    
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_sparkles"
+                        app:tint="#047857" />
+                        
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="社区配置"
+                        android:textStyle="bold"
+                        android:textColor="#064E3B"
+                        android:textSize="16sp" />
+                </LinearLayout>
+                
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnPersonalInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="个人信息设置"
+                    android:textAllCaps="false"
+                    android:textColor="#047857"
+                    app:icon="@drawable/ic_person"
+                    app:iconTint="#047857"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_marginBottom="8dp"/>
-
-                <Button
+                    android:layout_marginBottom="8dp" />
+                    
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnServerConfig"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="后端服务器配置"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-
+                    android:textAllCaps="false"
+                    android:textColor="#047857"
+                    app:icon="@drawable/ic_server"
+                    app:iconTint="#047857"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        </RadioGroup>
-
-        <TextView
-            android:id="@+id/tvModeDescription"
+        <!-- Info Bar -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="守护模式：本机作为守护者，监测自身状态并发送警报"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary"
-            android:background="@color/primary_light"
-            android:padding="12dp"
-            android:gravity="center"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_info_bar"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+            
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_info"
+                app:tint="#FB923C" />
+                
+            <TextView
+                android:id="@+id/tvModeDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="当前选择：社区守护模式"
+                android:textColor="#9A3412"
+                android:textStyle="bold"
+                android:textSize="14sp" />
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

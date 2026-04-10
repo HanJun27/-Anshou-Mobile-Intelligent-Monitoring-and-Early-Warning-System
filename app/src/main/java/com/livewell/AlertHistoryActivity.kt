@@ -27,6 +27,7 @@ class AlertHistoryActivity : AppCompatActivity() {
     private lateinit var tvSuccessCount: TextView
     private lateinit var tvFailedCount: TextView
     private lateinit var btnClearHistory: MaterialButton
+    private lateinit var btnBack: android.widget.ImageButton
     
     private var historyList = mutableListOf<AlertHistoryRecord>()
     
@@ -41,11 +42,17 @@ class AlertHistoryActivity : AppCompatActivity() {
     }
     
     private fun initViews() {
+        btnBack = findViewById(R.id.btnBack)
         rvHistory = findViewById(R.id.rvHistory)
         tvTotalCount = findViewById(R.id.tvTotalCount)
         tvSuccessCount = findViewById(R.id.tvSuccessCount)
         tvFailedCount = findViewById(R.id.tvFailedCount)
         btnClearHistory = findViewById(R.id.btnClearHistory)
+        
+        // 设置返回按钮点击事件
+        btnBack.setOnClickListener {
+            finish()
+        }
         
         rvHistory.layoutManager = LinearLayoutManager(this)
         rvHistory.adapter = HistoryAdapter()

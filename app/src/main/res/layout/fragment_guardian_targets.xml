@@ -36,12 +36,13 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tvStepIndicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:text="设置引导"
-            android:textColor="#94A3B8"
+            android:text="第 3 步，共 4 步"
+            android:textColor="#808080"
             android:textSize="14sp"/>
     </RelativeLayout>
 
@@ -102,13 +103,14 @@
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground">
 
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                    <!-- ✅ 使用 ImageView 替代 FAB，纯圆形 -->
+                    <ImageView
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
                         android:layout_marginBottom="16dp"
                         android:src="@drawable/ic_add"
-                        app:backgroundTint="#ff6b6b"
-                        app:fabSize="normal"
+                        android:background="@drawable/bg_circle_primary"
+                        android:padding="16dp"
                         app:tint="@android:color/white" />
 
                     <TextView
@@ -162,21 +164,14 @@
                 </RelativeLayout>
 
                 <!-- 被守护人列表 -->
-                <LinearLayout
-                    android:id="@+id/llMembersList"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewTargets"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-                    
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerViewTargets"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false"
-                        android:clipToPadding="false"
-                        android:overScrollMode="never" />
-                </LinearLayout>
+                    android:nestedScrollingEnabled="false"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- Info Section -->

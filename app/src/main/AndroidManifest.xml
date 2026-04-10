@@ -219,6 +219,16 @@
                 <action android:name="SNOOZE_ALERT" />
             </intent-filter>
         </receiver>
+        
+        <!-- ✅ 报警确认超时接收器 -->
+        <receiver
+            android:name=".receiver.AlertTimeoutReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.livewell.ACTION_ALERT_TIMEOUT" />
+            </intent-filter>
+        </receiver>
 
         <!-- ✅ 添加每日步数重置接收器 -->
 <receiver

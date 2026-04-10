@@ -29,8 +29,11 @@ class AlertConfirmReceiver : BroadcastReceiver() {
     private fun handleConfirm(context: Context) {
         Log.i(TAG, "用户确认安全")
         
+        // ✅ 取消超时闹钟
+        cancelTimeoutAlarm(context)
+        
         // 1. 取消确认通知
-        NotificationManagerCompat.from(context).cancel(1003)
+        androidx.core.app.NotificationManagerCompat.from(context).cancel(1003)
         
         // 2. 记录用户已确认状态
         val prefsManager = PrefsManager(context)
@@ -44,8 +47,11 @@ class AlertConfirmReceiver : BroadcastReceiver() {
     private fun handleSnooze(context: Context) {
         Log.i(TAG, "用户选择稍后提醒")
         
+        // ✅ 取消超时闹钟
+        cancelTimeoutAlarm(context)
+        
         // 1. 取消当前通知
-        NotificationManagerCompat.from(context).cancel(1003)
+        androidx.core.app.NotificationManagerCompat.from(context).cancel(1003)
         
         // 2. 设置30分钟后再次提醒
         val prefsManager = PrefsManager(context)
@@ -54,6 +60,28 @@ class AlertConfirmReceiver : BroadcastReceiver() {
         
         // 3. 发送稍后提醒通知
         sendSnoozeNotification(context)
+    }
+    
+    /**
+     * ✅ 取消超时闹钟
+     */
+    private fun cancelTimeoutAlarm(context: Context) {
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            val intent = Intent(context, AlertTimeoutReceiver::class.java).apply {
+                action = "com.livewell.ACTION_ALERT_TIMEOUT"
+            }
+            
+            val pendingIntent = android.app.PendingIntent.getBroadcast(
+                context, 3002, intent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            alarmManager.cancel(pendingIntent)
+            Log.i(TAG, "✅ 已取消超时闹钟")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 取消超时闹钟失败：${e.message}")
+        }
     }
     
     private fun sendConfirmationNotification(context: Context) {
