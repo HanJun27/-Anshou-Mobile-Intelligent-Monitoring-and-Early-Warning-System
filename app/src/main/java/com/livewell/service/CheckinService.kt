@@ -99,6 +99,14 @@ class CheckinService : Service() {
             triggerAlert()
         }
         
+        // ✅ 处理稍后提醒的重新检查
+        if (intent?.action == "SNOOZE_RECHECK") {
+            Log.i(tag, "收到 SNOOZE_RECHECK 指令，执行安全检查")
+            // ✅ 写入文件日志
+            com.livewell.untils.AppLogger.i(tag, "⏰ 稍后提醒时间到，重新检查")
+            performSafetyCheck()
+        }
+        
         return START_STICKY
     }
     
@@ -170,6 +178,11 @@ class CheckinService : Service() {
          Log.i(tag, "====== 触发警报 ======")
     // ✅ 写入文件日志
     com.livewell.untils.AppLogger.i(tag, "🚨 触发签到警报")
+    
+    // ✅ 记录最后报警时间（避免重复报警）
+    prefsManager.saveLastAlertTime(System.currentTimeMillis())
+    Log.i(tag, "已记录最后报警时间：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}")
+    
     val notifyType = prefsManager.getNotifyType()
     val reason = buildAlertReason()
          Log.i(tag, "通知方式：$notifyType")
@@ -287,6 +300,19 @@ private fun performSafetyCheck() {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val lastCheckin = prefsManager.getLastCheckinDate()
     
+    // ✅ 检查今日是否已经报过警（避免重复报警）
+    val lastAlertTime = prefsManager.getLastAlertTime()
+    val lastAlertDate = if (lastAlertTime > 0) {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(lastAlertTime))
+    } else {
+        ""
+    }
+    
+    if (lastAlertDate == today) {
+        Log.i(tag, "⚠️ 今日已报过警（${lastAlertDate}），跳过本次检查")
+        return
+    }
+    
     // ✅ 获取今日使用时长和步数（考虑跨天睡眠）
     val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
     
@@ -362,6 +388,20 @@ private fun handleAutoAlertMode(usageAbnormal: Boolean, stepAbnormal: Boolean) {
     Log.i(tag, "自动报警模式 - 评判标准：$criteria, 是否触发：$shouldAlert")
     
     if (shouldAlert) {
+        // ✅ 检查今日是否已报过警
+        val lastAlertTime = prefsManager.getLastAlertTime()
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val lastAlertDate = if (lastAlertTime > 0) {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(lastAlertTime))
+        } else {
+            ""
+        }
+        
+        if (lastAlertDate == today) {
+            Log.i(tag, "⚠️ 自动报警模式：今日已报过警，跳过")
+            return
+        }
+        
         if (prefsManager.isAlertConfirmEnabled()) {
             sendConfirmNotification()
         } else {

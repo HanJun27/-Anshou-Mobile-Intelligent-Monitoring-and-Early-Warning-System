@@ -55,10 +55,14 @@ class AlertConfirmReceiver : BroadcastReceiver() {
         
         // 2. 设置30分钟后再次提醒
         val prefsManager = PrefsManager(context)
+        val snoozeTime = System.currentTimeMillis() + 30 * 60 * 1000
         prefsManager.setSnoozeRequested(true)
-        prefsManager.setSnoozeTime(System.currentTimeMillis() + 30 * 60 * 1000)
+        prefsManager.setSnoozeTime(snoozeTime)
         
-        // 3. 发送稍后提醒通知
+        // ✅ 3. 设置30分钟后的闹钟，重新触发检查
+        scheduleSnoozeAlarm(context, snoozeTime)
+        
+        // 4. 发送稍后提醒通知
         sendSnoozeNotification(context)
     }
     
@@ -81,6 +85,43 @@ class AlertConfirmReceiver : BroadcastReceiver() {
             Log.i(TAG, "✅ 已取消超时闹钟")
         } catch (e: Exception) {
             Log.e(TAG, "❌ 取消超时闹钟失败：${e.message}")
+        }
+    }
+    
+    /**
+     * ✅ 设置稍后提醒的闹钟（30分钟后重新触发检查）
+     */
+    private fun scheduleSnoozeAlarm(context: Context, snoozeTime: Long) {
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            
+            // ✅ 创建一个 Intent，用于30分钟后重新启动 CheckinService
+            val intent = Intent(context, com.livewell.service.CheckinService::class.java).apply {
+                action = "SNOOZE_RECHECK"
+            }
+            
+            val pendingIntent = android.app.PendingIntent.getService(
+                context, 3003, intent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    android.app.AlarmManager.RTC_WAKEUP,
+                    snoozeTime,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    android.app.AlarmManager.RTC_WAKEUP,
+                    snoozeTime,
+                    pendingIntent
+                )
+            }
+            
+            Log.i(TAG, "✅ 已设置稍后提醒闹钟：${android.icu.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(snoozeTime)}")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 设置稍后提醒闹钟失败：${e.message}")
         }
     }
     
