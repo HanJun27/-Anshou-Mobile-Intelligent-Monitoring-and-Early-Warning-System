@@ -16,8 +16,7 @@ class BootReceiver : BroadcastReceiver() {
     private val tag = "BootReceiver"
     
     override fun onReceive(context: Context, intent: Intent) {
-        context.startService(Intent(context, com.livewell.service.CheckinService::class.java))
-
+        // ✅ 只在开机完成时启动服务，避免其他广播触发
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || 
             intent.action == "android.intent.action.QUICKBOOT_POWERON") {
             
@@ -66,6 +65,8 @@ class BootReceiver : BroadcastReceiver() {
             val stepManager = com.livewell.untils.SystemStepManager.getInstance(context) // ✅ 修改为单例方法
             stepManager.resetDailySteps()
             Log.i(tag, "开机完成，已重置步数传感器")
+        } else {
+            Log.w(tag, "收到非开机广播：${intent.action}，忽略")
         }
     }
     

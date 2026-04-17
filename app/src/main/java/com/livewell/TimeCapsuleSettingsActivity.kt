@@ -506,26 +506,34 @@ class TimeCapsuleSettingsActivity : BaseActivity() {
     }
     
     // ✅ 保存附件到 SharedPreferences
+    // ✅ 保存附件到 PrefsManager（统一存储）
     private fun saveAttachmentsToPrefs() {
-        val json = com.google.gson.Gson().toJson(attachmentsList)
-        val prefs = getSharedPreferences("livewell_prefs", Context.MODE_PRIVATE)
-        prefs.edit().putString("time_capsule_attachments", json).apply()
+        // ✅ 修复：使用 PrefsManager 的统一接口，而不是直接写入 SharedPreferences
+        val attachmentPaths = attachmentsList.map { it.path }
+        prefsManager.setPasswordBookAttachments(attachmentPaths)
+        Log.d(TAG, "✅ 附件已保存到 PrefsManager：${attachmentPaths.size}个")
     }
     
-    // ✅ 从 SharedPreferences 加载附件
+    // ✅ 从 PrefsManager 加载附件（统一存储）
     private fun loadAttachmentsFromPrefs() {
-        val prefs = getSharedPreferences("livewell_prefs", Context.MODE_PRIVATE)
-        val json = prefs.getString("time_capsule_attachments", null)
-        if (!json.isNullOrEmpty()) {
-            try {
-                val type = object : com.google.gson.reflect.TypeToken<List<Attachment>>() {}.type
-                val list = com.google.gson.Gson().fromJson<List<Attachment>>(json, type)
-                attachmentsList.clear()
-                attachmentsList.addAll(list)
-            } catch (e: Exception) {
-                e.printStackTrace()
+        // ✅ 修复：使用 PrefsManager 的统一接口读取
+        val attachmentPaths = prefsManager.getPasswordBookAttachments()
+        attachmentsList.clear()
+        attachmentPaths.forEach { path ->
+            // 从路径中提取文件名
+            val fileName = path.substringAfterLast("/").substringAfterLast("\\")
+            // 根据文件扩展名判断类型
+            val type = when {
+                fileName.endsWith(".jpg", ignoreCase = true) || 
+                fileName.endsWith(".jpeg", ignoreCase = true) || 
+                fileName.endsWith(".png", ignoreCase = true) -> "image"
+                fileName.endsWith(".mp4", ignoreCase = true) || 
+                fileName.endsWith(".avi", ignoreCase = true) -> "video"
+                else -> "file"
             }
+            attachmentsList.add(Attachment(path, type, fileName))
         }
+        Log.d(TAG, "✅ 从 PrefsManager 加载附件：${attachmentsList.size}个")
     }
     
     private fun saveSettings() {

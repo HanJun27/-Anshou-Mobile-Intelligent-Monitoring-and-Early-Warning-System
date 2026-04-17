@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- 智能模式开关 -->
+        <!-- ✅ 使用时长监测开关 -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="智能模式"
+                        android:text="使用时长监测"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary"/>
@@ -49,7 +49,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="根据您的使用习惯自动调整警报阈值"
+                    android:text="开启后将监测您的设备使用时长，超过阈值时触发警报"
                     android:textSize="14sp"
                     android:textColor="@color/text_secondary"
                     android:layout_marginTop="8dp"/>

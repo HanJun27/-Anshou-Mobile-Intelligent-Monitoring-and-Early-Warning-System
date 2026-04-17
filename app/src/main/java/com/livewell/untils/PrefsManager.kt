@@ -286,7 +286,7 @@ class PrefsManager(context: Context) {
     }
     
     fun getEmailSmtpPort(): String {
-        return prefs.getString("email_port", "587") ?: "587"
+        return prefs.getString("email_port", "465") ?: "465"  // ✅ 默认端口改为 465 (SSL)
     }
     
     // 模式相关方法
@@ -296,6 +296,13 @@ class PrefsManager(context: Context) {
     
     fun getAppMode(): String {
         return prefs.getString(KEY_APP_MODE, MODE_GUARDIAN) ?: MODE_GUARDIAN
+    }
+    
+    /**
+     * ✅ 检查是否已经明确设置了应用模式（不是默认值）
+     */
+    fun hasExplicitlySetAppMode(): Boolean {
+        return prefs.contains(KEY_APP_MODE)
     }
     
     fun saveLastEmailCheckTime(time: Long) {
@@ -863,7 +870,7 @@ fun getLastStepSaveDate(): String {
 
 // 无声音乐播放保活设置
 fun isSilentMusicEnabled(): Boolean {
-    return prefs.getBoolean(KEY_SILENT_MUSIC_ENABLED, false) // 默认关闭
+    return prefs.getBoolean(KEY_SILENT_MUSIC_ENABLED, true) // ✅ 默认开启
 }
 
 fun setSilentMusicEnabled(enabled: Boolean) {

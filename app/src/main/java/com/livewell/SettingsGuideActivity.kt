@@ -59,18 +59,20 @@ class SettingsGuideActivity : AppCompatActivity() {
         btnPrevious = findViewById(R.id.btnPrevious)
         btnNext = findViewById(R.id.btnNext)
         
-        // ✅ 检查是否有之前保存的模式
+        // ✅ 检查是否有之前保存的模式（且不是默认值）
         val savedMode = prefsManager.getAppMode()
-        android.util.Log.d("SettingsGuide", "启动时检查: savedMode=$savedMode")
+        val hasExplicitlySetMode = prefsManager.hasExplicitlySetAppMode()
         
-        if (savedMode != null && (savedMode == PrefsManager.MODE_GUARDIAN || 
+        android.util.Log.d("SettingsGuide", "启动时检查: savedMode=$savedMode, hasExplicitlySetMode=$hasExplicitlySetMode")
+        
+        if (hasExplicitlySetMode && (savedMode == PrefsManager.MODE_GUARDIAN || 
                                    savedMode == PrefsManager.MODE_RECEIVER || 
                                    savedMode == PrefsManager.MODE_MIXED)) {
-            // 有保存的模式，直接加载对应的 Fragment
+            // 有明确保存的模式，直接加载对应的 Fragment
             android.util.Log.d("SettingsGuide", "✅ 发现已保存的模式: $savedMode，直接加载")
             loadFragmentsForMode(savedMode)
         } else {
-            // 没有保存的模式，初始化基础 Fragment
+            // 没有保存的模式或只有默认值，初始化基础 Fragment
             android.util.Log.d("SettingsGuide", "⚠️ 未找到已保存的模式，初始化基础 Fragment")
             initFragments()
         }
@@ -146,7 +148,7 @@ class SettingsGuideActivity : AppCompatActivity() {
         }
         
         btnNext.setOnClickListener {
-            android.util.Log.d("NextButton", "点击下一步: currentStep=$currentStep, selectedMode=$selectedMode, totalSteps=$totalSteps")
+            android.util.Log.d("NextButton", "点击下一步: currentStep=$currentStep, selectedMode=$selectedMode, totalSteps=$totalSteps, fragments.size=${fragments.size}")
             
             if (currentStep == 0) {
                 // 在权限页面，检查是否需要提醒
@@ -186,8 +188,8 @@ class SettingsGuideActivity : AppCompatActivity() {
                 )
                     
                 if (tvStepIndicator != null) {
-                    tvStepIndicator.text = "第 ${position} 步，共 ${totalSteps} 步"
-                    android.util.Log.d("StepIndicator", "✅ 更新步骤数: $position / $totalSteps")
+                    tvStepIndicator.text = "第 ${position + 1} 步，共 ${totalSteps} 步"
+                    android.util.Log.d("StepIndicator", "✅ 更新步骤数: ${position + 1} / $totalSteps")
                 } else {
                     android.util.Log.w("StepIndicator", "⚠️ 未找到 tvStepIndicator")
                 }
@@ -400,7 +402,7 @@ abstract class SettingsGuideFragment : Fragment() {
                     val resId = resources.getIdentifier(idName, "id", requireContext().packageName)
                     if (resId != 0) {
                         val tvStep = view?.findViewById<android.widget.TextView>(resId)
-                        tvStep?.text = "第 ${currentStep} 步，共 ${totalSteps} 步"
+                        tvStep?.text = "第 ${currentStep + 1} 步，共 ${totalSteps} 步"
                         break
                     }
                 }
@@ -1029,11 +1031,11 @@ class EmailProviderFragment : SettingsGuideFragment() {
         }
         
         btnQQ.setOnClickListener {
-            showEmailConfigDialog("QQ 邮箱", "smtp.qq.com", "587")
+            showEmailConfigDialog("QQ 邮箱", "smtp.qq.com", "465")
         }
         
         btn163.setOnClickListener {
-            showEmailConfigDialogWithHelp("网易 163 邮箱", "smtp.163.com", "587", "163")
+            showEmailConfigDialogWithHelp("网易 163 邮箱", "smtp.163.com", "465", "163")
         }
         
         btnTest.setOnClickListener {
@@ -1660,7 +1662,7 @@ A4: 通常是大写字母 + 数字组合，10-20 位
         val mailSender = MailSender()
         mailSender.sendEmail(
             host = host ?: "smtp.qq.com",
-            port = port ?: "587",
+            port = port ?: "465",  // ✅ 默认端口改为 465 (SSL)
             fromEmail = fromEmail,
             authCode = authCode,
             toEmail = toEmail,
@@ -1845,6 +1847,10 @@ class ModeSelectionFragment : SettingsGuideFragment() {
             if (guideActivity != null) {
                 guideActivity.selectedMode = mode
                 android.util.Log.d("ModeSelection", "✅ 模式已选择: $mode, selectedMode = ${guideActivity.selectedMode}")
+                
+                // ✅ 关键修复：选择模式后，重新加载 Fragment 列表
+                android.util.Log.d("ModeSelection", "🔄 开始重新加载 Fragment 列表...")
+                guideActivity.loadFragmentsForMode(mode)
             } else {
                 android.util.Log.e("ModeSelection", "❌ activity 为 null，无法更新 selectedMode")
             }

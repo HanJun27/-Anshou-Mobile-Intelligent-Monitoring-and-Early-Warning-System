@@ -49,6 +49,10 @@ class CheckinService : Service() {
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "checkin_alerts_channel"
         
+        // ✅ 防止重复调度定时任务
+        @Volatile
+        private var isScheduleInitialized = false
+        
         fun start(context: Context) {
             val intent = Intent(context, CheckinService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -83,9 +87,19 @@ class CheckinService : Service() {
     scheduleAlarm()
     scheduleDailyStepReset()
     
-    // ✅ 延时任务在后台线程执行
-    executor.execute {
-        scheduleChecks()
+    // ✅ 只在首次启动时调度定时检查任务，防止重复调度
+    if (!isScheduleInitialized) {
+        synchronized(this) {
+            if (!isScheduleInitialized) {
+                executor.execute {
+                    scheduleChecks()
+                }
+                isScheduleInitialized = true
+                Log.i(tag, "✅ 定时检查任务已初始化")
+            }
+        }
+    } else {
+        Log.i(tag, "⚠️ 定时检查任务已存在，跳过重复调度")
     }
 }
 
@@ -123,6 +137,11 @@ class CheckinService : Service() {
     UnifiedNotificationService.checkinInfo = ""
     UnifiedNotificationService.updateNotification(this)
     serviceScope.cancel()
+    
+    // ✅ 服务销毁时重置调度标志，允许下次重新启动时重新调度
+    isScheduleInitialized = false
+    Log.i(tag, "✅ 已重置定时任务调度标志")
+    
     super.onDestroy()
 }
 
@@ -178,6 +197,9 @@ class CheckinService : Service() {
          Log.i(tag, "====== 触发警报 ======")
     // ✅ 写入文件日志
     com.livewell.untils.AppLogger.i(tag, "🚨 触发签到警报")
+    
+    // ✅ 记录报警时间（避免重复报警）
+    prefsManager.saveLong("last_alert_time", System.currentTimeMillis())
     
     // ✅ 记录最后报警时间（避免重复报警）
     prefsManager.saveLastAlertTime(System.currentTimeMillis())
@@ -300,19 +322,6 @@ private fun performSafetyCheck() {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val lastCheckin = prefsManager.getLastCheckinDate()
     
-    // ✅ 检查今日是否已经报过警（避免重复报警）
-    val lastAlertTime = prefsManager.getLastAlertTime()
-    val lastAlertDate = if (lastAlertTime > 0) {
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(lastAlertTime))
-    } else {
-        ""
-    }
-    
-    if (lastAlertDate == today) {
-        Log.i(tag, "⚠️ 今日已报过警（${lastAlertDate}），跳过本次检查")
-        return
-    }
-    
     // ✅ 获取今日使用时长和步数（考虑跨天睡眠）
     val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
     
@@ -350,6 +359,19 @@ private fun performSafetyCheck() {
     }
     
     Log.i(tag, "用户今日未签到，继续检查...")
+    
+    // ✅ 检查今日是否已报过警（避免重复报警）
+    val lastAlertTime = prefsManager.getLastAlertTime()
+    val lastAlertDate = if (lastAlertTime > 0) {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(lastAlertTime))
+    } else {
+        ""
+    }
+    
+    if (lastAlertDate == today) {
+        Log.i(tag, "⚠️ 默认模式：今日已报过警，跳过重复报警")
+        return
+    }
     
     // 未签到，检查是否有任何异常
     if (usageAbnormal || stepAbnormal) {
@@ -527,25 +549,14 @@ private fun sendEmailAlert() {
             override fun onError(error: String) {
                 Log.e(tag, "❌ 邮件发送失败：$error")
                 updateLastEmailRecordStatus(AlertStatus.FAILED)
-                trySmsFallback()
+                sendAlertNotification()
             }
         },
         context = this  // ✅ 添加这一行
     )
 }
     
-    private fun trySmsFallback() {
-        val contact = prefsManager.getEmergencyContact()
-        if (!contact.isNullOrEmpty()) {
-            // 构建完整的警报内容：用户自定义消息 + 步数和使用时长信息
-            val userMessage = prefsManager.getAlertMessage()
-            val additionalInfo = generateGuardianStatusInfo()
-            val fullContent = buildFullAlertContent(userMessage, additionalInfo)
-            sendSmsAlert(contact, fullContent)
-        } else {
-            sendAlertNotification()
-        }
-    }
+
     
     private fun sendAlertNotification() {
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -616,6 +627,12 @@ private fun getAdaptiveThresholds(): Pair<Int, Int> {
 
 private fun sendConfirmNotification() {
     Log.i(tag, "====== 发送确认通知 ======")
+    
+    // ✅ 关键修复：在发送新通知前，先取消旧的超时闹钟
+    cancelAlertTimeoutAlarm()
+    
+    // ✅ 记录报警时间（避免重复报警）
+    prefsManager.saveLong("last_alert_time", System.currentTimeMillis())
     
     // 检查是否在稍后提醒时间内
     val snoozeTime = prefsManager.getSnoozeTime()
@@ -715,6 +732,28 @@ private fun scheduleAlertTimeoutAlarm(timeoutTime: Long) {
         }
     } catch (e: Exception) {
         Log.e(tag, "❌ 设置超时闹钟失败：${e.message}")
+    }
+}
+
+/**
+ * ✅ 取消超时闹钟（防止重复触发）
+ */
+private fun cancelAlertTimeoutAlarm() {
+    try {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(this, com.livewell.receiver.AlertTimeoutReceiver::class.java).apply {
+            action = "com.livewell.ACTION_ALERT_TIMEOUT"
+        }
+        
+        val pendingIntent = android.app.PendingIntent.getBroadcast(
+            this, 3002, intent,
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        alarmManager.cancel(pendingIntent)
+        Log.i(tag, "✅ 已取消旧的超时闹钟")
+    } catch (e: Exception) {
+        Log.e(tag, "❌ 取消超时闹钟失败：${e.message}")
     }
 }
 

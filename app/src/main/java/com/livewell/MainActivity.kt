@@ -130,6 +130,10 @@ class MainActivity : AppCompatActivity() {
     // 时光胶囊附件相关
     private var currentAttachmentType: String? = null
     private var imageCaptureUri: Uri? = null
+    private var currentAttachmentsRecyclerView: androidx.recyclerview.widget.RecyclerView? = null  // ✅ 保存当前附件列表 RecyclerView 引用
+    
+    // ✅ SOS紧急求助位置相关
+    private var pendingLocationRequest: Boolean = false  // 是否有待处理的位置请求
     
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -156,9 +160,14 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            persistUriPermission(it)
-            saveAttachment(it.toString())
-            Toast.makeText(this, "图片已添加", Toast.LENGTH_SHORT).show()
+            // ✅ 修复：复制文件到应用私有目录，而不是只保存 URI 引用
+            val copiedUri = copyFileToAppDirectory(it, "image")
+            if (copiedUri != null) {
+                saveAttachment(copiedUri.toString())
+                Toast.makeText(this, "图片已添加", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "图片添加失败", Toast.LENGTH_SHORT).show()
+            }
         }
     }
     
@@ -166,9 +175,39 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            persistUriPermission(it)
-            saveAttachment(it.toString())
-            Toast.makeText(this, "视频已添加", Toast.LENGTH_SHORT).show()
+            // ✅ 修复：复制文件到应用私有目录，而不是只保存 URI 引用
+            val copiedUri = copyFileToAppDirectory(it, "video")
+            if (copiedUri != null) {
+                saveAttachment(copiedUri.toString())
+                Toast.makeText(this, "视频已添加", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "视频添加失败", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    // ✅ 位置权限请求
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        
+        if (fineLocationGranted || coarseLocationGranted) {
+            Log.i(TAG, "✅ 位置权限已授予")
+            // 如果有待处理的SOS请求，继续执行
+            if (pendingLocationRequest) {
+                pendingLocationRequest = false
+                getLocationAndSendSOS()
+            }
+        } else {
+            Log.w(TAG, "⚠️ 位置权限被拒绝")
+            Toast.makeText(this, "位置权限被拒绝，将无法获取位置信息", Toast.LENGTH_LONG).show()
+            // 即使没有位置权限，也继续发送SOS
+            if (pendingLocationRequest) {
+                pendingLocationRequest = false
+                sendSOSWithoutLocation()
+            }
         }
     }
 
@@ -459,47 +498,164 @@ try {
      * 触发紧急求助
      */
     private fun triggerEmergencyAlert() {
+        // ✅ 检查位置权限
+        val hasFineLocation = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val hasCoarseLocation = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        
+        if (!hasFineLocation && !hasCoarseLocation) {
+            // 没有位置权限，请求权限
+            Log.i(TAG, "⚠️ 未授予位置权限，正在请求...")
+            pendingLocationRequest = true
+            locationPermissionLauncher.launch(arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+            return
+        }
+        
+        // 已有位置权限，直接获取位置并发送
+        getLocationAndSendSOS()
+    }
+    
+    /**
+     * ✅ 获取位置并发送SOS邮件
+     */
+    private fun getLocationAndSendSOS() {
         try {
-            // 获取当前位置（简化版，实际应使用 LocationManager）
-            val locationInfo = "位置信息获取中..."
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            
+            // 尝试获取最后已知位置
+            var location: android.location.Location? = null
+            
+            // 优先使用 GPS
+            if (locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
+                try {
+                    location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                } catch (e: Exception) {
+                    Log.e(TAG, "GPS 位置获取失败：${e.message}")
+                }
+            }
+            
+            // 如果 GPS 不可用，使用网络定位
+            if (location == null && locationManager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)) {
+                try {
+                    location = locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                } catch (e: Exception) {
+                    Log.e(TAG, "网络位置获取失败：${e.message}")
+                }
+            }
+            
+            val locationInfo = if (location != null) {
+                String.format("纬度: %.6f, 经度: %.6f, 精度: %.0f米", 
+                    location.latitude, 
+                    location.longitude,
+                    location.accuracy)
+            } else {
+                "位置信息获取失败（可能GPS信号弱或无网络连接）"
+            }
+            
+            Log.i(TAG, "✅ 位置信息：$locationInfo")
+            sendSOSWithEmail(locationInfo)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 获取位置失败：${e.message}", e)
+            sendSOSWithoutLocation()
+        }
+    }
+    
+    /**
+     * ✅ 发送SOS邮件（带位置信息）- 自动通过SMTP发送
+     */
+    private fun sendSOSWithEmail(locationInfo: String) {
+        try {
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             
             // 创建紧急求助邮件内容
             val subject = "【紧急求助】安守 LiveWell - $timestamp"
             val body = """
-                紧急求助警报！
+                🆘 紧急求助警报！
                 
                 触发时间：$timestamp
-                位置信息：$locationInfo
-                设备型号：${Build.MANUFACTURER} ${Build.MODEL}
+                📍 位置信息：$locationInfo
+                📱 设备型号：${Build.MANUFACTURER} ${Build.MODEL}
                 
-                请立即联系用户确认安全状况！
+                ⚠️ 请立即联系用户确认安全状况！
             """.trimIndent()
             
-            // 获取紧急联系人邮箱
-            val emergencyEmail = prefsManager.getEmergencyContact()
-            if (!emergencyEmail.isNullOrEmpty()) {
-                // 使用 Intent 打开邮件客户端
-                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:$emergencyEmail")
-                    putExtra(Intent.EXTRA_SUBJECT, subject)
-                    putExtra(Intent.EXTRA_TEXT, body)
-                }
-                
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                    Toast.makeText(this, "已打开邮件客户端，请发送邮件", Toast.LENGTH_LONG).show()
-                    Log.i(TAG, "紧急求助邮件客户端已打开")
-                } else {
-                    Toast.makeText(this, "未找到邮件客户端", Toast.LENGTH_LONG).show()
-                }
-            } else {
-                Toast.makeText(this, "未设置紧急联系人邮箱，请先在设置中添加", Toast.LENGTH_LONG).show()
+            // ✅ 获取邮箱配置
+            val toEmail = prefsManager.getEmailTo()
+            val fromEmail = com.livewell.untils.SecurePrefsManager(this).getEmailAccount()
+            val authCode = com.livewell.untils.SecurePrefsManager(this).getEmailAuthCode()
+            val smtpHost = prefsManager.getEmailSmtpHost()
+            val smtpPort = prefsManager.getEmailSmtpPort()
+            
+            // 验证配置完整性
+            if (toEmail.isNullOrEmpty()) {
+                Toast.makeText(this, "未设置收件人邮箱，请先在「功能设置」中配置邮箱", Toast.LENGTH_LONG).show()
+                return
             }
+            
+            if (fromEmail.isNullOrEmpty() || authCode.isNullOrEmpty()) {
+                Toast.makeText(this, "未配置发件人邮箱，请先在「功能设置」中配置邮箱", Toast.LENGTH_LONG).show()
+                return
+            }
+            
+            if (smtpHost.isNullOrEmpty()) {
+                Toast.makeText(this, "未配置SMTP服务器，请先在「功能设置」中配置邮箱", Toast.LENGTH_LONG).show()
+                return
+            }
+            
+            // ✅ 显示发送中提示
+            Toast.makeText(this, "正在发送紧急求助邮件...", Toast.LENGTH_SHORT).show()
+            Log.i(TAG, "🚀 开始发送SOS邮件")
+            
+            // ✅ 使用 MailSender 自动发送邮件
+            val mailSender = com.livewell.service.MailSender()
+            mailSender.sendEmail(
+                host = smtpHost,
+                port = smtpPort,
+                fromEmail = fromEmail,
+                authCode = authCode,
+                toEmail = toEmail,
+                subject = subject,
+                content = body,
+                context = this,
+                callback = object : com.livewell.service.MailSender.SendCallback {
+                    override fun onSuccess() {
+                        Log.i(TAG, "✅ SOS邮件发送成功")
+                        runOnUiThread {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "✅ 紧急求助邮件已发送\n位置：$locationInfo",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                    
+                    override fun onError(error: String) {
+                        Log.e(TAG, "❌ SOS邮件发送失败：$error")
+                        runOnUiThread {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "❌ 邮件发送失败：$error\n请检查网络或邮箱配置",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+            )
+            
         } catch (e: Exception) {
-            Log.e(TAG, "触发紧急求助失败", e)
+            Log.e(TAG, "❌ 触发紧急求助失败", e)
             Toast.makeText(this, "求助失败：${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+    
+    /**
+     * ✅ 发送SOS邮件（无位置信息）
+     */
+    private fun sendSOSWithoutLocation() {
+        sendSOSWithEmail("位置信息不可用")
     }
     
     /**
@@ -1103,30 +1259,29 @@ private fun setupUsageThresholdDialog() {
         .show()
 }
 
-//  在 showSmartSettingsDialog() 方法之后添加此方法
-// ✅ 完整替换此方法，删除所有 bootTime 相关代码
+//  ✅ 使用时长设置对话框 - 简化为开关控制
 private fun showUsageSettingsDialog() {
     val dialogView = layoutInflater.inflate(R.layout.dialog_usage_settings, null)
-    val switchSmartMode = dialogView.findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.switchSmartMode)
-    //val switchPureUsageMode = dialogView.findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.switchPureUsageMode)
+    val switchUsageMonitor = dialogView.findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.switchSmartMode)  // ID保持不变
     val cardThresholds = dialogView.findViewById<androidx.cardview.widget.CardView>(R.id.cardThresholds)
     val tvAppUsageValue = dialogView.findViewById<TextView>(R.id.tvAppUsageValue)
     val btnAppUsageMinus = dialogView.findViewById<Button>(R.id.btnAppUsageMinus)
     val btnAppUsagePlus = dialogView.findViewById<Button>(R.id.btnAppUsagePlus)
     
-    // ✅ 只保留 appUsageThreshold
     var appUsageThreshold = prefsManager.getAppUsageThreshold()
     
     tvAppUsageValue.text = appUsageThreshold.toString()
-    switchSmartMode.isChecked = prefsManager.isSmartModeEnabled()
-    //switchPureUsageMode.isChecked = prefsManager.isPureUsageMode()
     
-    cardThresholds.alpha = if (switchSmartMode.isChecked) 0.5f else 1.0f
-    cardThresholds.isEnabled = !switchSmartMode.isChecked
+    // ✅ 默认开启使用时长监测
+    switchUsageMonitor.isChecked = prefsManager.isSmartModeEnabled()  // 复用 smartMode 字段作为开关
     
-    switchSmartMode.setOnCheckedChangeListener { _, isChecked ->
-        cardThresholds.alpha = if (isChecked) 0.5f else 1.0f
-        cardThresholds.isEnabled = !isChecked
+    // ✅ 根据开关状态启用/禁用阈值设置
+    cardThresholds.alpha = if (switchUsageMonitor.isChecked) 1.0f else 0.5f
+    cardThresholds.isEnabled = switchUsageMonitor.isChecked
+    
+    switchUsageMonitor.setOnCheckedChangeListener { _, isChecked ->
+        cardThresholds.alpha = if (isChecked) 1.0f else 0.5f
+        cardThresholds.isEnabled = isChecked
     }
     
     btnAppUsageMinus.setOnClickListener {
@@ -1147,8 +1302,8 @@ private fun showUsageSettingsDialog() {
         .setTitle("设备使用时长设置")
         .setView(dialogView)
         .setPositiveButton("保存") { _, _ ->
-            prefsManager.setSmartModeEnabled(switchSmartMode.isChecked)
-            //prefsManager.setPureUsageMode(switchPureUsageMode.isChecked)
+            // ✅ 保存开关状态和阈值
+            prefsManager.setSmartModeEnabled(switchUsageMonitor.isChecked)
             prefsManager.setAppUsageThreshold(appUsageThreshold)
             Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show()
         }
@@ -1770,6 +1925,18 @@ private fun showUsageSettingsDialog() {
                 } catch (e: Exception) {
                     Log.e("MainActivity", "重置错误", e)
                 }
+            }
+            
+            // ✅ 新增：重启所有服务按钮
+            val btnRestartAllServices = dialogView.findViewById<Button>(R.id.btnRestartAllServices)
+            btnRestartAllServices.setOnClickListener {
+                restartAllServices()
+            }
+
+            // ✅ 新增：清除今日警报记录按钮
+            val btnClearAlertRecord = dialogView.findViewById<Button>(R.id.btnClearAlertRecord)
+            btnClearAlertRecord.setOnClickListener {
+                clearTodayAlertRecord()
             }
 
             // ✅ 新增：查看日志按钮
@@ -3000,7 +3167,7 @@ private fun startAllServices() {
         val etPasswordQuestion = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPasswordQuestion)
         val etPasswordAnswer = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPasswordAnswer)
         val etPasswordContent = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPasswordContent)
-        val layoutAttachments = view.findViewById<LinearLayout>(R.id.layoutAttachments)
+        val rvAttachments = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvAttachments)  // ✅ 改为 RecyclerView
         val btnAddAttachment = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnAddAttachment)
         
         // 加载现有设置
@@ -3013,8 +3180,8 @@ private fun startAllServices() {
         etPasswordAnswer.setText(prefsManager.getPasswordBookAnswer())
         etPasswordContent.setText(prefsManager.getPasswordBookContent())
         
-        // 加载现有附件列表
-        updateAttachmentsList(layoutAttachments)
+        // ✅ 加载现有附件列表（使用 RecyclerView）
+        setupAttachmentRecyclerView(rvAttachments, prefsManager.getPasswordBookAttachments(), true)
         
         // 根据总开关显示/隐藏功能卡片
         updateFeatureCardsVisibility(switchTimeCapsule.isChecked, cardEmergencyEmail, cardPasswordBook)
@@ -3026,7 +3193,7 @@ private fun startAllServices() {
         
         // 添加附件按钮
         btnAddAttachment.setOnClickListener {
-            showAddAttachmentDialog(layoutAttachments)
+            showAddAttachmentDialog(rvAttachments)  // ✅ 传入 RecyclerView
         }
         
         builder.setView(view)
@@ -3063,7 +3230,10 @@ private fun startAllServices() {
     /**
      * 显示添加附件对话框
      */
-    private fun showAddAttachmentDialog(layoutAttachments: LinearLayout) {
+    private fun showAddAttachmentDialog(rvAttachments: androidx.recyclerview.widget.RecyclerView) {
+        // ✅ 保存当前附件列表 RecyclerView 引用
+        currentAttachmentsRecyclerView = rvAttachments
+        
         val items = arrayOf("拍照", "从相册选择图片", "拍摄视频", "从相册选择视频")
         
         MaterialAlertDialogBuilder(this)
@@ -3141,8 +3311,11 @@ private fun startAllServices() {
      */
     private fun saveAttachment(uriString: String) {
         prefsManager.addPasswordBookAttachment(uriString)
-        // 如果是新拍摄的照片，添加到临时列表用于显示
-        updateAttachmentsList(null) // 在下一个对话框中会重新加载
+        // ✅ 使用保存的 RecyclerView 引用来更新当前对话框中的附件列表
+        currentAttachmentsRecyclerView?.let { rv ->
+            setupAttachmentRecyclerView(rv, prefsManager.getPasswordBookAttachments(), true)
+        }
+        Log.d(TAG, "✅ 附件已保存并更新UI：$uriString")
     }
     
     /**
@@ -3279,6 +3452,67 @@ private fun startAllServices() {
     }
     
     /**
+     * ✅ 复制文件到应用私有目录（防止原文件被删除）
+     * @param sourceUri 源文件 URI
+     * @param fileType 文件类型：image 或 video
+     * @return 复制后的文件 URI，失败返回 null
+     */
+    private fun copyFileToAppDirectory(sourceUri: Uri, fileType: String): Uri? {
+        return try {
+            // 生成文件名
+            val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault())
+                .format(java.util.Date())
+            val extension = when (fileType) {
+                "image" -> ".jpg"
+                "video" -> ".mp4"
+                else -> ".dat"
+            }
+            val fileName = "ATTACHMENT_${timeStamp}_${System.currentTimeMillis()}$extension"
+            
+            // 确定存储目录
+            val storageDir = when (fileType) {
+                "image" -> getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                "video" -> getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+                else -> getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+            }
+            
+            if (storageDir == null) {
+                Log.e(TAG, "❌ 存储目录为空")
+                return null
+            }
+            
+            // 创建目标文件
+            val destFile = java.io.File(storageDir, fileName)
+            
+            // 复制文件
+            contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                java.io.FileOutputStream(destFile).use { outputStream ->
+                    val buffer = ByteArray(8192)
+                    var bytesRead: Int
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        outputStream.write(buffer, 0, bytesRead)
+                    }
+                    outputStream.flush()
+                }
+            }
+            
+            // 获取新文件的 URI
+            val newUri = FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                destFile
+            )
+            
+            Log.i(TAG, "✅ 文件已复制到：${destFile.absolutePath}")
+            newUri
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 复制文件失败：${e.message}", e)
+            null
+        }
+    }
+    
+    /**
      * 保存时光胶囊设置
      */
     private fun saveTimeCapsuleSettings(
@@ -3371,9 +3605,22 @@ private fun startAllServices() {
         isEditMode: Boolean
     ) {
         recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
-        val adapter = AttachmentAdapter(attachments, isEditMode, null) { path ->
-            // TODO: 打开文件
-            Toast.makeText(this, "打开文件：$path", Toast.LENGTH_SHORT).show()
+        val adapter = AttachmentAdapter(attachments, isEditMode, { path ->
+            // ✅ 删除附件
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("确认删除")
+                .setMessage("确定要删除这个附件吗？")
+                .setPositiveButton("删除") { _, _ ->
+                    prefsManager.removePasswordBookAttachment(path)
+                    // 重新加载附件列表
+                    setupAttachmentRecyclerView(recyclerView, prefsManager.getPasswordBookAttachments(), isEditMode)
+                    Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }) { path ->
+            // ✅ 查看附件
+            viewAttachment(path)
         }
         recyclerView.adapter = adapter
     }
@@ -3403,6 +3650,115 @@ private fun startAllServices() {
             )
         
         Log.d(TAG, "时光胶囊 Worker 已调度")
+    }
+    
+    /**
+     * ✅ 重启所有服务（用于开发者测试）
+     */
+    private fun restartAllServices() {
+        Log.i(TAG, "====== 开始重启所有服务 ======")
+        // ✅ 使用 AppLogger 写入文件，以便在日志查看界面显示
+        com.livewell.untils.AppLogger.i(TAG, "🔄 开始重启所有服务")
+        
+        try {
+            // 1. 停止 CheckinService
+            Log.i(TAG, "正在停止 CheckinService...")
+            com.livewell.untils.AppLogger.i(TAG, "⏹️ 正在停止 CheckinService")
+            val checkinIntent = Intent(this, CheckinService::class.java)
+            stopService(checkinIntent)
+            
+            // 2. 停止 EmailReceiverService
+            Log.i(TAG, "正在停止 EmailReceiverService...")
+            com.livewell.untils.AppLogger.i(TAG, "⏹️ 正在停止 EmailReceiverService")
+            val emailIntent = Intent(this, EmailReceiverService::class.java)
+            stopService(emailIntent)
+            
+            // 3. 停止 KeepAliveChecker
+            Log.i(TAG, "正在停止 KeepAliveChecker...")
+            com.livewell.untils.AppLogger.i(TAG, "⏹️ 正在停止 KeepAliveChecker")
+            val keepAliveIntent = Intent(this, KeepAliveChecker::class.java)
+            stopService(keepAliveIntent)
+            
+            // 4. 取消 KeepAliveJobService
+            Log.i(TAG, "正在取消 KeepAliveJobService...")
+            com.livewell.untils.AppLogger.i(TAG, "⏹️ 正在取消 KeepAliveJobService")
+            KeepAliveJobService.cancelJob(this)
+            
+            // 5. 等待一下，确保服务完全停止
+            Thread.sleep(500)
+            
+            // 6. 重新启动服务
+            Log.i(TAG, "正在重新启动服务...")
+            com.livewell.untils.AppLogger.i(TAG, "🚀 正在重新启动服务...")
+            val mode = prefsManager.getAppMode()
+            
+            when (mode) {
+                PrefsManager.MODE_GUARDIAN -> {
+                    CheckinService.start(this)
+                    Log.i(TAG, "✅ CheckinService 已启动")
+                    com.livewell.untils.AppLogger.i(TAG, "✅ CheckinService 已启动")
+                }
+                PrefsManager.MODE_RECEIVER -> {
+                    EmailReceiverService.start(this)
+                    Log.i(TAG, "✅ EmailReceiverService 已启动")
+                    com.livewell.untils.AppLogger.i(TAG, "✅ EmailReceiverService 已启动")
+                }
+                PrefsManager.MODE_MIXED -> {
+                    CheckinService.start(this)
+                    EmailReceiverService.start(this)
+                    Log.i(TAG, "✅ CheckinService 和 EmailReceiverService 已启动")
+                    com.livewell.untils.AppLogger.i(TAG, "✅ CheckinService 和 EmailReceiverService 已启动")
+                }
+            }
+            
+            // 7. 重新启动 KeepAliveChecker
+            KeepAliveChecker.start(this)
+            KeepAliveJobService.scheduleJob(this)
+            Log.i(TAG, "✅ KeepAliveChecker 和 KeepAliveJobService 已启动")
+            com.livewell.untils.AppLogger.i(TAG, "✅ KeepAliveChecker 和 KeepAliveJobService 已启动")
+            
+            // 8. 显示成功提示
+            Toast.makeText(this, "✅ 所有服务已重启", Toast.LENGTH_SHORT).show()
+            Log.i(TAG, "====== 所有服务重启完成 ======")
+            com.livewell.untils.AppLogger.i(TAG, "✅✅✅ 所有服务重启完成")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 重启服务失败：${e.message}", e)
+            com.livewell.untils.AppLogger.e(TAG, "❌ 重启服务失败：${e.message}")
+            Toast.makeText(this, "❌ 重启失败：${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    /**
+     * ✅ 清除今日警报记录（用于生产环境测试）
+     */
+    private fun clearTodayAlertRecord() {
+        Log.i(TAG, "====== 清除今日警报记录 ======")
+        com.livewell.untils.AppLogger.i(TAG, "🗑️ 清除今日警报记录")
+        
+        try {
+            // 1. 显示确认对话框
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("⚠️ 确认清除")
+                .setMessage("此操作将清除今日的最后报警时间记录，允许再次触发警报。\n\n仅用于生产环境测试，请谨慎使用！\n\n是否继续？")
+                .setPositiveButton("确认清除") { _, _ ->
+                    // 2. 清除 last_alert_time
+                    prefsManager.saveLastAlertTime(0)
+                    
+                    Log.i(TAG, "✅ 已清除最后报警时间记录")
+                    com.livewell.untils.AppLogger.i(TAG, "✅ 已清除最后报警时间记录")
+                    
+                    // 3. 显示成功提示
+                    Toast.makeText(this, "✅ 已清除今日警报记录，可以重新触发警报", Toast.LENGTH_LONG).show()
+                }
+                .setNegativeButton("取消", null)
+                .show()
+                
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ 清除警报记录失败：${e.message}", e)
+            com.livewell.untils.AppLogger.e(TAG, "❌ 清除警报记录失败：${e.message}")
+            Toast.makeText(this, "❌ 清除失败：${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
     
     /**
