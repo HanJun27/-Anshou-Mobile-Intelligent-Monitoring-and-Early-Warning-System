@@ -119,8 +119,11 @@ class SleepMonitorService : Service(), SensorEventListener {
 
             // ✅ 新增：记录服务启动日志
             Log.i(tag, "==========================================")
+            com.livewell.untils.AppLogger.i(tag, "==========================================")
             Log.i(tag, "睡眠监测服务启动 - ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}")
+            com.livewell.untils.AppLogger.i(tag, "睡眠监测服务启动 - ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}")
             Log.i(tag, "==========================================")
+            com.livewell.untils.AppLogger.i(tag, "==========================================")
             
             UnifiedNotificationService.sleepMonitorRunning = true
             UnifiedNotificationService.sleepMonitorInfo = "睡眠监测服务运行中"
@@ -137,6 +140,7 @@ class SleepMonitorService : Service(), SensorEventListener {
                 createUnifiedServiceNotification()
             )
             Log.i(tag, "✅ startForeground() 调用成功，前台通知已显示")
+            com.livewell.untils.AppLogger.i(tag, "✅ startForeground() 调用成功，前台通知已显示")
 
             // ✅ 注册屏幕状态广播接收器（代替轮询）
             registerScreenReceiver()
@@ -150,17 +154,20 @@ class SleepMonitorService : Service(), SensorEventListener {
             // ✅ 检查是否在睡眠时段，决定启动哪些传感器
             if (isWithinSleepTimeWindow()) {
                 Log.i(tag, "当前在睡眠时段，启动完整监测")
+                com.livewell.untils.AppLogger.i(tag, "当前在睡眠时段，启动完整监测")
                 // ✅ 屏幕监测已改用广播，不需要启动定时器
                 startAccelerometerMonitoring()
                 scheduleStepCheck() // ✅ 新增：定时步数检查
                 scheduleLatestWakeUpAlarm() // ✅ 确保设置最晚起床检查闹钟
             } else {
                 Log.i(tag, "当前非睡眠时段，进入低功耗模式")
+                com.livewell.untils.AppLogger.i(tag, "当前非睡眠时段，进入低功耗模式")
                 enterLowPowerMode()
                 scheduleSleepWindowAlarm() // ✅ 添加：设置睡眠窗口启动闹钟
             }
             
             Log.i(tag, "✅ 睡眠监测服务初始化完成")
+            com.livewell.untils.AppLogger.i(tag, "✅ 睡眠监测服务初始化完成")
             // ✅ 写入文件日志
             com.livewell.untils.AppLogger.i(tag, "🚀 睡眠监测服务已启动")
         } catch (e: Exception) {
@@ -217,16 +224,19 @@ class SleepMonitorService : Service(), SensorEventListener {
         when (intent?.action) {
             "ACTION_START_SLEEP_MONITORING" -> {
                 Log.i(tag, "收到睡眠窗口启动广播，启动完整监测")
+                com.livewell.untils.AppLogger.i(tag, "📻 收到睡眠窗口启动广播，启动完整监测")
                 startFullMonitoring()
             }
             "ACTION_CHECK_LATEST_WAKEUP" -> {
                 Log.i(tag, "收到最晚起床检查闹钟")
+                com.livewell.untils.AppLogger.i(tag, "⏰ 收到最晚起床检查闹钟触发")
                 checkIfUserIsStillSleeping()
             }
             "ACTION_RETRY_EMAIL" -> {
                 val report = intent.getStringExtra("retry_report")
                 if (!report.isNullOrEmpty()) {
                     Log.i(tag, "🔄 收到邮件重试广播")
+                    com.livewell.untils.AppLogger.i(tag, "🔄 收到邮件重试广播")
                     sendEmailReport(report)
                 }
             }
@@ -251,6 +261,7 @@ class SleepMonitorService : Service(), SensorEventListener {
         
         // ✅ 新增：记录服务停止日志
         Log.w(tag, "睡眠监测服务停止")
+        com.livewell.untils.AppLogger.w(tag, "⛔ 睡眠监测服务停止")
         
         UnifiedNotificationService.sleepMonitorRunning = false
         UnifiedNotificationService.sleepMonitorInfo = ""
@@ -900,6 +911,7 @@ class SleepMonitorService : Service(), SensorEventListener {
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val presetHour = prefsManager.getWakeUpHour()
             val presetMinute = prefsManager.getWakeUpMinute()
+            val toleranceHours = prefsManager.getWakeUpToleranceHours()
 
             // 计算今天的预设起床时间
             val todayWakeTime = Calendar.getInstance().apply {
@@ -915,15 +927,23 @@ class SleepMonitorService : Service(), SensorEventListener {
             }
 
             // ✅ 读取用户配置的容忍时长
-            val toleranceHours = prefsManager.getWakeUpToleranceHours()
             val latestWakeTime = todayWakeTime.timeInMillis + toleranceHours * 60 * 60 * 1000L
 
             val now = System.currentTimeMillis()
             val delayMillis = latestWakeTime - now
 
+            // ✅ 添加详细日志
+            com.livewell.untils.AppLogger.i(tag, "⏰ 设置起床异常检查闹钟：")
+            com.livewell.untils.AppLogger.i(tag, "   预设起床时间：${String.format("%02d:%02d", presetHour, presetMinute)}")
+            com.livewell.untils.AppLogger.i(tag, "   容差时长：${toleranceHours}小时")
+            com.livewell.untils.AppLogger.i(tag, "   最晚起床时间：${android.icu.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(latestWakeTime)}")
+            com.livewell.untils.AppLogger.i(tag, "   当前时间：${android.icu.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(now)}")
+            com.livewell.untils.AppLogger.i(tag, "   延迟：${delayMillis / 1000 / 60}分钟")
+
             // 如果检查时间已经过去，立即检查
             if (delayMillis <= 0) {
                 Log.w(tag, "最晚起床时间已过，立即检查")
+                com.livewell.untils.AppLogger.w(tag, "⚠️ 最晚起床时间已过，立即执行检查")
                 checkIfUserIsStillSleeping()
                 return
             }
@@ -1287,8 +1307,8 @@ class SleepMonitorService : Service(), SensorEventListener {
 
         // 记录发送尝试（在发送前记录）
         val notifyType = prefsManager.getNotifyType()
-        // ✅ 获取当前步数和使用时长（考虑跨天）
-        val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this@SleepMonitorService)
+        // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+        val (currentSteps, usageMinutes) = prefsManager.getCompleteDayActivity(this@SleepMonitorService)
                 
         prefsManager.addAlertHistory(
             AlertHistoryRecord(
@@ -1431,8 +1451,8 @@ class SleepMonitorService : Service(), SensorEventListener {
      * 生成守护对象状态信息（步数和使用时长）
      */
     private fun generateGuardianStatusInfo(): String {
-        // ✅ 使用新的方法获取考虑跨天的数据
-        val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this)
+        // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+        val (stepCount, todayUsage) = prefsManager.getCompleteDayActivity(this)
         val stepThreshold = prefsManager.getStepThreshold()
         
         val info = StringBuilder()
@@ -1578,8 +1598,8 @@ class SleepMonitorService : Service(), SensorEventListener {
     
         val report = buildOverSleepReport(sleepDuration, presetHour, presetMinute, toleranceHours)
             
-        // ✅ 获取当前步数和使用时长（考虑跨天）
-        val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this)
+        // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+        val (currentSteps, usageMinutes) = prefsManager.getCompleteDayActivity(this)
     
         // 记录警报历史
         val notifyType = prefsManager.getNotifyType()

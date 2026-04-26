@@ -4074,11 +4074,23 @@ private fun startAllServices() {
      * ✅ 显示睡眠快照记录对话框
      */
     private fun showSleepSnapshotsDialog() {
-        android.util.Log.i("SleepSnapshot", "====== 开始显示睡眠快照对话框 ======")
+        com.livewell.untils.AppLogger.i("SleepSnapshot", "====== 开始显示睡眠快照对话框 ======")
         
         val dialogView = layoutInflater.inflate(R.layout.dialog_sleep_snapshots, null)
         val layoutSnapshotsList = dialogView.findViewById<LinearLayout>(R.id.layoutSnapshotsList)
         val btnClose = dialogView.findViewById<Button>(R.id.btnClose)
+        
+        // ✅ 新增：调试信息 - 显示所有快照键（写入文件日志）
+        val allPrefs = prefsManager.getAllPrefs()
+        val snapshotKeys = allPrefs.keys.filter { it.startsWith("pre_sleep_") }
+        com.livewell.untils.AppLogger.i("SleepSnapshot", "🔍 调试：SharedPreferences 中所有快照键（共${snapshotKeys.size}个）：")
+        if (snapshotKeys.isEmpty()) {
+            com.livewell.untils.AppLogger.w("SleepSnapshot", "⚠️ 未找到任何快照数据！")
+        } else {
+            snapshotKeys.forEach { key ->
+                com.livewell.untils.AppLogger.i("SleepSnapshot", "   $key = ${allPrefs[key]}")
+            }
+        }
         
         // 获取最近 7 天的快照
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -4089,7 +4101,6 @@ private fun startAllServices() {
         
         for (i in 0 until 7) {
             val dateStr = dateFormat.format(calendar.time)
-            android.util.Log.d("SleepSnapshot", "检查日期：$dateStr")
             
             val snapshot = prefsManager.getPreSleepSnapshot(dateStr)
             
@@ -4098,7 +4109,7 @@ private fun startAllServices() {
                 snapshotCount++
                 val (steps, usage, sleepTime) = snapshot
                 
-                android.util.Log.i("SleepSnapshot", "找到快照 [$snapshotCount]：日期=$dateStr, 步数=$steps, 使用=$usage, 入睡时间=$sleepTime")
+                com.livewell.untils.AppLogger.i("SleepSnapshot", "✅ 找到快照 [$snapshotCount]：日期=$dateStr, 步数=$steps, 使用=${usage}分钟, 入睡时间=${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(sleepTime))}")
                 
                 // 创建快照卡片
                 val cardView = com.google.android.material.card.MaterialCardView(this).apply {
@@ -4181,9 +4192,11 @@ private fun startAllServices() {
             calendar.add(Calendar.DAY_OF_YEAR, -1)
         }
         
-        android.util.Log.i("SleepSnapshot", "检查结果：hasSnapshots=$hasSnapshots, 共找到 $snapshotCount 个快照")
+        com.livewell.untils.AppLogger.i("SleepSnapshot", "📊 检查结果：hasSnapshots=$hasSnapshots, 共找到 $snapshotCount 个快照")
         
         if (!hasSnapshots) {
+            com.livewell.untils.AppLogger.w("SleepSnapshot", "⚠️ 界面显示：暂无快照记录")
+            
             val tvNoData = TextView(this).apply {
                 text = "暂无快照记录\n\n提示：\n• 快照会在检测到入睡时自动保存\n• 请确保睡眠监测服务正在运行\n• 尝试睡一觉后再来查看"
                 textSize = 14f
@@ -4229,7 +4242,7 @@ private fun startAllServices() {
     ) {
         if (showRelative) {
             // 显示相对数据（排除0点到睡觉前）
-            val (usageMinutes, stepCount) = prefsManager.getCompleteDayActivity(this)
+            val (stepCount, usageMinutes) = prefsManager.getCompleteDayActivity(this)
             
             tvAppUsage.text = "${usageMinutes} 分钟"
             tvStepCount.text = "${stepCount} 步"

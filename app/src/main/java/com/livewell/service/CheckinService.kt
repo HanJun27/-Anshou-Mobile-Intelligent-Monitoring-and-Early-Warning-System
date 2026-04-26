@@ -223,8 +223,8 @@ class CheckinService : Service() {
             val message = prefsManager.getAlertMessage()
             if (!contact.isNullOrEmpty()) {
                 sendSmsAlert(contact, message)
-                // ✅ 获取当前步数和使用时长（考虑跨天）
-                val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this@CheckinService)
+                // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+                val (currentSteps, usageMinutes) = prefsManager.getCompleteDayActivity(this@CheckinService)
                 
                 prefsManager.addAlertHistory(AlertHistoryRecord(
                     timestamp = System.currentTimeMillis(),
@@ -243,8 +243,8 @@ class CheckinService : Service() {
             // ✅ 写入文件日志
             com.livewell.untils.AppLogger.i(tag, "📧 准备发送签到警报邮件") 
             sendEmailAlert()
-            // ✅ 获取当前步数和使用时长（考虑跨天）
-            val (usageMinutes, currentSteps) = prefsManager.getCompleteDayActivity(this@CheckinService)
+            // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+            val (currentSteps, usageMinutes) = prefsManager.getCompleteDayActivity(this@CheckinService)
             
             prefsManager.addAlertHistory(AlertHistoryRecord(
                 timestamp = System.currentTimeMillis(),
@@ -293,8 +293,8 @@ private fun buildAlertReason(): String {
         }
     }
     
-    // 今日使用时长检测（✅ 使用新的方法获取考虑跨天的数据）
-    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
+    // 今日使用时长检测（✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>）
+    val (stepCount, todayUsage) = prefsManager.getCompleteDayActivity(this@CheckinService)
     val usageThreshold = prefsManager.getAppUsageThreshold()
     if (todayUsage < usageThreshold) {
         reasons.add("今日使用${todayUsage}min < ${usageThreshold}min")
@@ -322,8 +322,8 @@ private fun performSafetyCheck() {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val lastCheckin = prefsManager.getLastCheckinDate()
     
-    // ✅ 获取今日使用时长和步数（考虑跨天睡眠）
-    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
+    // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+    val (stepCount, todayUsage) = prefsManager.getCompleteDayActivity(this@CheckinService)
     
     val usageThreshold = prefsManager.getAppUsageThreshold()
     val stepThreshold = prefsManager.getStepThreshold()
@@ -775,8 +775,8 @@ private fun getAverageAppUsage(): Long {
  * 生成守护对象状态信息（步数和使用时长）
  */
 private fun generateGuardianStatusInfo(): String {
-    // ✅ 使用新的方法获取考虑跨天的数据
-    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
+    // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+    val (stepCount, todayUsage) = prefsManager.getCompleteDayActivity(this@CheckinService)
     val stepThreshold = prefsManager.getStepThreshold()
     
     val info = StringBuilder()
@@ -817,8 +817,8 @@ private fun generateExceptionReport(): String {
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     val lastCheckin = prefsManager.getLastCheckinDate()
     
-    // ✅ 改为今日使用时长（考虑跨天）
-    val (todayUsage, stepCount) = prefsManager.getCompleteDayActivity(this@CheckinService)
+    // ✅ 修复：getCompleteDayActivity 返回 Pair<步数, 使用时长>
+    val (stepCount, todayUsage) = prefsManager.getCompleteDayActivity(this@CheckinService)
     val usageThreshold = prefsManager.getAppUsageThreshold()
     
     val stepThreshold = prefsManager.getStepThreshold()

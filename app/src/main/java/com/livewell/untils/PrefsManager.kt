@@ -1567,6 +1567,13 @@ fun removePreSleepSnapshot(date: String) {
 }
 
 /**
+ * ✅ 获取所有偏好设置（用于调试）
+ */
+fun getAllPrefs(): Map<String, *> {
+    return prefs.all
+}
+
+/**
  * ✅ 清理 7 天前的旧快照
  */
 fun cleanupOldSnapshots(currentDate: String) {
@@ -1633,8 +1640,18 @@ fun getCompleteDayActivity(context: android.content.Context): Pair<Int, Int> {
         calendar.add(Calendar.DAY_OF_YEAR, -1)
         val yesterdayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
         
+        android.util.Log.i("PrefsManager", "🔍 查询完整日活动数据：")
+        android.util.Log.i("PrefsManager", "   今天日期：$today")
+        android.util.Log.i("PrefsManager", "   查询昨天快照：$yesterdayStr")
+        
         // 检查是否有昨天的睡前快照
         val snapshot = getPreSleepSnapshot(yesterdayStr)
+        
+        if (snapshot != null) {
+            android.util.Log.i("PrefsManager", "   ✅ 找到昨天快照：步数=${snapshot.first}, 使用=${snapshot.second}")
+        } else {
+            android.util.Log.w("PrefsManager", "   ❌ 未找到昨天快照！")
+        }
         
         // 获取当前实时数据
         val currentSteps = com.livewell.untils.SystemStepManager.getInstance(context).getTodaySteps(syncIfNeeded = true)
