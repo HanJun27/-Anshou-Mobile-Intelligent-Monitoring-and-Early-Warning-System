@@ -2,20 +2,31 @@ package com.livewell.untils
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 
 class SecurePrefsManager(context: Context) {
     
+    private val tag = "SecurePrefsManager"
     private val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
     
-    private val encryptedPrefs: SharedPreferences = EncryptedSharedPreferences.create(
-        "secure_prefs",
-        masterKeyAlias,
-        context,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val encryptedPrefs: SharedPreferences = try {
+        EncryptedSharedPreferences.create(
+            "secure_prefs",
+            masterKeyAlias,
+            context,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    } catch (e: Exception) {
+        Log.e(tag, "❌ EncryptedSharedPreferences 初始化失败：${e.message}", e)
+        // ✅ 降级方案：使用普通 SharedPreferences
+        context.getSharedPreferences("secure_prefs_fallback", Context.MODE_PRIVATE)
+    }
+    
+    // ✅ 降级方案：普通 SharedPreferences
+    private val fallbackPrefs: SharedPreferences = context.getSharedPreferences("secure_prefs_fallback", Context.MODE_PRIVATE)
     
     fun saveEmailCredentials(email: String, authCode: String) {
         encryptedPrefs.edit().putString("email_account", email).apply()

@@ -556,7 +556,7 @@ fun setInactiveThreshold(minutes: Int) {
 }
 
 fun getInactiveThreshold(): Int {
-    return prefs.getInt(KEY_INACTIVE_THRESHOLD, 30) // 默认30分钟
+    return prefs.getInt(KEY_INACTIVE_THRESHOLD, 15) // ✅ 降低默认值：从30分钟改为15分钟
 }
 
 // 步数增长阈值（入睡判定）// 修改后

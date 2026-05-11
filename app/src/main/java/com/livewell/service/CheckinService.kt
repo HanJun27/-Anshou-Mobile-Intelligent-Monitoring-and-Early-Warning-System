@@ -186,7 +186,10 @@ class CheckinService : Service() {
     
     Log.i(tag, "下次检查时间：${alertHour}:${String.format("%02d", alertMinute)}，延迟：${initialDelay / 1000 / 60}分钟")
     
-    executor.scheduleAtFixedRate({
+    // ✅ 修复：使用 scheduleWithFixedDelay 而不是 scheduleAtFixedRate
+    // scheduleAtFixedRate 会在任务执行时间长时累积延迟
+    // scheduleWithFixedDelay 保证每次执行完后等待固定时间再执行下一次
+    executor.scheduleWithFixedDelay({
         performSafetyCheck()
     }, initialDelay, TimeUnit.DAYS.toMillis(1), TimeUnit.MILLISECONDS)
 }
@@ -311,7 +314,14 @@ private fun buildAlertReason(): String {
 
 // 修改 performSafetyCheck() 方法
 private fun performSafetyCheck() {
+    val checkStartTime = System.currentTimeMillis()
+    val checkTimeStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(checkStartTime))
+    
     Log.i(tag, "====== 开始安全检查 ======")
+    Log.i(tag, "⏰ 检查触发时间：$checkTimeStr")
+    // ✅ 写入文件日志
+    com.livewell.untils.AppLogger.i(tag, "====== 开始安全检查 ======")
+    com.livewell.untils.AppLogger.i(tag, "⏰ 检查触发时间：$checkTimeStr")
     
     if (prefsManager.isTestMode()) {
         Log.i(tag, "测试模式，执行测试检查")
@@ -497,6 +507,9 @@ private fun generateTestReport(
 private fun sendEmailAlert() {
     Log.i(tag, "====== sendEmailAlert 被调用 ======")
     Log.i(tag, "准备发送警报邮件")
+    // ✅ 写入文件日志
+    com.livewell.untils.AppLogger.i(tag, "====== sendEmailAlert 被调用 ======")
+    com.livewell.untils.AppLogger.i(tag, "📧 准备发送警报邮件")
     
     val securePrefs = SecurePrefsManager(this)
     val fromEmail = securePrefs.getEmailAccount()
@@ -511,16 +524,32 @@ private fun sendEmailAlert() {
     Log.i(tag, "SMTP 端口：$port")
     Log.i(tag, "收件邮箱：${if (toEmail.isNullOrEmpty()) "❌ 为空" else "✅ 已配置 ($toEmail)"}")
     
+    // ✅ 写入文件日志 - 详细配置信息
+    com.livewell.untils.AppLogger.i(tag, "🔍 邮件配置检查：")
+    com.livewell.untils.AppLogger.i(tag, "   fromEmail: ${if (fromEmail.isNullOrEmpty()) "❌ 为空" else "✅ $fromEmail"}")
+    com.livewell.untils.AppLogger.i(tag, "   authCode: ${if (authCode.isNullOrEmpty()) "❌ 为空" else "✅ ${authCode.take(4)}..."}")
+    com.livewell.untils.AppLogger.i(tag, "   SMTP Host: ${host ?: "❌ null"}")
+    com.livewell.untils.AppLogger.i(tag, "   SMTP Port: ${port ?: "❌ null"}")
+    com.livewell.untils.AppLogger.i(tag, "   toEmail: ${if (toEmail.isNullOrEmpty()) "❌ 为空" else "✅ $toEmail"}")
+    
     if (fromEmail.isNullOrEmpty() || authCode.isNullOrEmpty() || toEmail.isNullOrEmpty()) {
         Log.e(tag, "❌ 邮件配置不完整，无法发送邮件")
         Log.e(tag, "fromEmail 为空：${fromEmail.isNullOrEmpty()}")
         Log.e(tag, "authCode 为空：${authCode.isNullOrEmpty()}")
         Log.e(tag, "toEmail 为空：${toEmail.isNullOrEmpty()}")
+        
+        // ✅ 写入文件日志
+        com.livewell.untils.AppLogger.e(tag, "❌ 邮件配置不完整，无法发送邮件")
+        com.livewell.untils.AppLogger.e(tag, "   fromEmail 为空：${fromEmail.isNullOrEmpty()}")
+        com.livewell.untils.AppLogger.e(tag, "   authCode 为空：${authCode.isNullOrEmpty()}")
+        com.livewell.untils.AppLogger.e(tag, "   toEmail 为空：${toEmail.isNullOrEmpty()}")
+        
         sendAlertNotification()
         return
     }
     
     Log.i(tag, "✅ 邮件配置完整，开始发送邮件...")
+    com.livewell.untils.AppLogger.i(tag, "✅ 邮件配置完整，开始发送邮件...")
     
     val mailSender = MailSender()
     // 构建完整的警报内容：用户自定义消息 + 步数和使用时长信息

@@ -948,26 +948,8 @@ private fun showEmergencyContactSettingsDialog() {
     }
 
     private fun checkPermissions() {
-    if (!usageStatsHelper.hasUsageStatsPermission()) {
-        showUsageStatsDialog()
-    }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-        intent.data = Uri.parse("package:$packageName")
-        startActivity(intent)
-    }
-    
-    // ✅ 添加以下代码块（Android 12+ 精确 Alarm 权限）
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-        if (!alarmManager.canScheduleExactAlarms()) {
-            // 引导用户授权
-            val intent = android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
-            startActivity(android.content.Intent(intent))
-        }
-    }
-    
-    // ✅ 检查是否是首次启动，如果是则显示设置引导
+    // ✅ 修复：移除所有权限请求，统一在 SettingsGuideActivity 中处理
+    // 这里只检查是否是首次启动，如果是则显示设置引导
     checkFirstLaunch()
 }
 

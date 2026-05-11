@@ -1097,6 +1097,9 @@ class SleepMonitorService : Service(), SensorEventListener {
             lastMotionTime = System.currentTimeMillis()
             consecutiveSleepChecks = 0 // ✅ 重置入睡检查计数器
             
+            // ✅ 取消邮件重试闹钟（防止用户醒来后还重复发送警报）
+            cancelEmailRetryAlarm()
+            
             // ✅ 清除 PrefsManager 中的状态（服务重启恢复用）
             prefsManager.saveLong("confirmed_sleep_start_time", 0)
             prefsManager.saveLong("latest_wake_up_alarm_scheduled", 0)  // ✅ 用 Long 代替 Boolean
@@ -1909,6 +1912,7 @@ class SleepMonitorService : Service(), SensorEventListener {
             "Connection", 
             "timeout", 
             "Network", 
+            "网络",  // ✅ 新增：中文"网络"也视为可重试
             "Socket", 
             "SSLHandshake",
             "UnknownHost" // 临时 DNS 问题
@@ -1949,8 +1953,41 @@ class SleepMonitorService : Service(), SensorEventListener {
             }
             
             Log.i(tag, "📅 邮件重试已调度：${android.icu.text.SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(retryTime)}")
+            com.livewell.untils.AppLogger.i(tag, "🔄 已调度邮件重试：5分钟后")
         } catch (e: Exception) {
             Log.e(tag, "调度邮件重试失败", e)
+            com.livewell.untils.AppLogger.e(tag, "❌ 调度邮件重试失败：${e.message}")
+        }
+    }
+    
+    /**
+     * ✅ 取消邮件重试闹钟（用户醒来时调用）
+     */
+    private fun cancelEmailRetryAlarm() {
+        try {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            
+            val intent = Intent(this, SleepMonitorService::class.java).apply {
+                action = "ACTION_RETRY_EMAIL"
+            }
+            
+            val pendingIntent = PendingIntent.getService(
+                this, 3001, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            alarmManager.cancel(pendingIntent)
+            
+            // 重置重试计数器
+            val prefs = getSharedPreferences("livewell_prefs", Context.MODE_PRIVATE)
+            prefs.edit().putInt("email_retry_count", 0).apply()
+            
+            Log.i(tag, "✅ 已取消邮件重试闹钟")
+            com.livewell.untils.AppLogger.i(tag, "✅ 已取消邮件重试闹钟（用户已醒来）")
+            
+        } catch (e: Exception) {
+            Log.e(tag, "❌ 取消邮件重试闹钟失败：${e.message}", e)
+            com.livewell.untils.AppLogger.e(tag, "❌ 取消邮件重试闹钟失败：${e.message}")
         }
     }
     

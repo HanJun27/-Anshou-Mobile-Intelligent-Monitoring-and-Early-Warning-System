@@ -631,6 +631,18 @@ class PermissionsFragment : SettingsGuideFragment() {
                 cbOverlay.isChecked = true
                 showOverlayPermissionDialog()
             }
+            "使用统计" -> {
+                showUsageStatsPermissionDialog()
+                // 使用统计需要跳转到设置页面，等待用户返回后继续
+            }
+            "电池优化" -> {
+                showBatteryOptimizationDialog()
+                // 电池优化需要跳转到设置页面，等待用户返回后继续
+            }
+            "精确闹钟" -> {
+                showExactAlarmPermissionDialog()
+                // 精确闹钟需要跳转到设置页面，等待用户返回后继续
+            }
         }
     }
     
@@ -653,6 +665,12 @@ class PermissionsFragment : SettingsGuideFragment() {
         if (!cbNotification.isChecked) ungranted.add("通知")
         if (!cbClipboard.isChecked) ungranted.add("剪贴板")
         if (!cbOverlay.isChecked) ungranted.add("悬浮窗")
+        
+        // ✅ 新增：检查其他系统权限
+        if (!hasUsageStatsPermission()) ungranted.add("使用统计")
+        if (!isBatteryOptimizationDisabled()) ungranted.add("电池优化")
+        if (!hasExactAlarmPermission()) ungranted.add("精确闹钟")
+        
         return ungranted
     }
     
@@ -662,6 +680,116 @@ class PermissionsFragment : SettingsGuideFragment() {
     fun setClipboardChecked() {
         cbClipboard.isChecked = true
         prefsManager.setClipboardPermissionGranted(true)
+    }
+    
+    /**
+     * ✅ 检查使用统计权限
+     */
+    private fun hasUsageStatsPermission(): Boolean {
+        val appOps = requireContext().getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                requireContext().packageName
+            )
+        } else {
+            appOps.checkOpNoThrow(
+                android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(),
+                requireContext().packageName
+            )
+        }
+        return mode == android.app.AppOpsManager.MODE_ALLOWED
+    }
+    
+    /**
+     * ✅ 检查电池优化是否已禁用
+     */
+    private fun isBatteryOptimizationDisabled(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = requireContext().getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            return powerManager.isIgnoringBatteryOptimizations(requireContext().packageName)
+        }
+        return true // Android 6.0 以下不需要检查
+    }
+    
+    /**
+     * ✅ 检查精确闹钟权限
+     */
+    private fun hasExactAlarmPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            return alarmManager.canScheduleExactAlarms()
+        }
+        return true // Android 12 以下不需要检查
+    }
+    
+    /**
+     * ✅ 显示使用统计权限对话框
+     */
+    private fun showUsageStatsPermissionDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("📊 使用统计权限")
+            .setMessage("""为了检测您今天是否使用过手机，我们需要读取使用统计权限。
+
+此权限用于：
+• 计算今日应用使用时长
+• 判断是否达到报警阈值
+
+是否前往设置？""")
+            .setPositiveButton("去设置") { _, _ ->
+                startActivity(Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+    
+    /**
+     * ✅ 显示电池优化权限对话框
+     */
+    private fun showBatteryOptimizationDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("🔋 电池优化权限")
+                .setMessage("""为了确保服务稳定运行，我们需要关闭电池优化。
+
+此设置用于：
+• 防止后台服务被系统杀死
+• 确保定时任务正常执行
+
+是否前往设置？""")
+                .setPositiveButton("去设置") { _, _ ->
+                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    intent.data = android.net.Uri.parse("package:${requireContext().packageName}")
+                    startActivity(intent)
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
+    }
+    
+    /**
+     * ✅ 显示精确闹钟权限对话框
+     */
+    private fun showExactAlarmPermissionDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("⏰ 精确闹钟权限")
+                .setMessage("""Android 12+ 需要精确闹钟权限才能准时触发报警。
+
+此权限用于：
+• 在预设时间准时检查状态
+• 确保睡眠监测闹钟准确
+
+是否前往设置？""")
+                .setPositiveButton("去设置") { _, _ ->
+                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                    startActivity(intent)
+                }
+                .setNegativeButton("取消", null)
+                .show()
+        }
     }
     
     companion object {
@@ -1832,6 +1960,12 @@ class ModeSelectionFragment : SettingsGuideFragment() {
         
         // ✅ 点击卡片选择模式
         card.setOnClickListener {
+            // ✅ 先显示 Toast（在 Fragment 被替换之前）
+            val context = context
+            if (context != null && isAdded) {
+                Toast.makeText(context, "已选择：$title", Toast.LENGTH_SHORT).show()
+            }
+            
             // 取消其他卡片的选中状态
             deselectAllModes(card.parent as? ViewGroup)
             
@@ -1854,8 +1988,6 @@ class ModeSelectionFragment : SettingsGuideFragment() {
             } else {
                 android.util.Log.e("ModeSelection", "❌ activity 为 null，无法更新 selectedMode")
             }
-            
-            Toast.makeText(requireContext(), "已选择：$title", Toast.LENGTH_SHORT).show()
         }
     }
     
