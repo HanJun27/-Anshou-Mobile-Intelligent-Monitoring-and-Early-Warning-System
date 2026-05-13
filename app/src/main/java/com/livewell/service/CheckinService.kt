@@ -559,6 +559,8 @@ private fun sendEmailAlert() {
     
     Log.i(tag, "邮件主题：【安守】紧急警报")
     Log.i(tag, "邮件内容长度：${fullContent.length} 字符")
+    Log.i(tag, "📧 调用 mailSender.sendEmail()，等待异步回调...")
+    com.livewell.untils.AppLogger.i(tag, "📧 调用 mailSender.sendEmail()，等待异步回调...")
     
     mailSender.sendEmail(
         host = host,
@@ -570,19 +572,24 @@ private fun sendEmailAlert() {
         content = fullContent,
         callback = object : MailSender.SendCallback {
             override fun onSuccess() {
-                Log.i(tag, "✅ 警报邮件发送成功")
+                Log.i(tag, "✅✅✅ 警报邮件发送成功！回调已触发")
+                com.livewell.untils.AppLogger.i(tag, "✅✅✅ 警报邮件发送成功！回调已触发")
                 updateLastEmailRecordStatus(AlertStatus.SUCCESS)
                 sendAlertNotification()
             }
             
             override fun onError(error: String) {
-                Log.e(tag, "❌ 邮件发送失败：$error")
+                Log.e(tag, "❌❌❌ 邮件发送失败！错误：$error")
+                com.livewell.untils.AppLogger.e(tag, "❌❌❌ 邮件发送失败！错误：$error")
                 updateLastEmailRecordStatus(AlertStatus.FAILED)
                 sendAlertNotification()
             }
         },
         context = this  // ✅ 添加这一行
     )
+    
+    Log.i(tag, "✅ mailSender.sendEmail() 调用完成，后台线程正在发送邮件...")
+    com.livewell.untils.AppLogger.i(tag, "✅ mailSender.sendEmail() 调用完成，后台线程正在发送邮件...")
 }
     
 

@@ -321,8 +321,12 @@ class SleepMonitorService : Service(), SensorEventListener {
         val previousScreenOffTime = lastScreenOffTime
         lastScreenOffTime = System.currentTimeMillis()
         
+        // ✅ 关键修复：持久化 lastScreenOffTime，防止服务重启后丢失
+        prefsManager.saveLong("last_screen_off_time", lastScreenOffTime)
+        
         if (previousScreenOffTime == 0L) {
             Log.i(tag, "📱 屏幕关闭（首次记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}")
+            com.livewell.untils.AppLogger.i(tag, "📱 屏幕关闭（首次记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}")
         } else {
             val offDuration = lastScreenOffTime - previousScreenOffTime
             Log.d(tag, "📱 屏幕关闭（重新记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}, 间隔=${offDuration/1000}秒")
@@ -715,16 +719,20 @@ class SleepMonitorService : Service(), SensorEventListener {
         // 关闭所有与睡眠相关的传感器
         stopSensorMonitoring()
         
-        // ✅ 注销屏幕广播接收器以节省电量
-        unregisterScreenReceiver()
+        // ✅ 关键修复：不要注销屏幕广播接收器！
+        // 之前的逻辑有问题：注销了屏幕广播接收器后，用户在睡眠窗口前关闭屏幕时
+        // handleScreenOff() 不会被调用，导致 lastScreenOffTime 无法更新
+        // 当闹钟在睡眠窗口前5分钟唤醒服务时，lastScreenOffTime 可能还是旧值或0
+        // 
+        // 正确做法：保持屏幕广播接收器注册，只关闭传感器和定时器来省电
+        // 屏幕广播的功耗极低，不会影响电池续航
         
         // ✅ 重置步数检查计数器，停止定时器
         stepCheckCounter = 0
         
-        // ✅ 重置屏幕状态，避免下次启动时使用旧数据
-        lastScreenOffTime = 0
-        
-        Log.i(tag, "💤 进入低功耗模式，关闭所有传感器和定时器")
+        Log.i(tag, "💤 进入低功耗模式，关闭传感器和定时器，但保留屏幕广播接收器")
+        Log.i(tag, "📝 保留 lastScreenOffTime=${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}，持续监听屏幕状态")
+        com.livewell.untils.AppLogger.i(tag, "💤 进入低功耗模式，保留屏幕广播接收器以追踪屏幕关闭时间")
         
         // ✅ 设置在睡眠窗口开始前启动的闹钟
         scheduleSleepWindowAlarm()
@@ -1124,6 +1132,16 @@ class SleepMonitorService : Service(), SensorEventListener {
         val lastConfirmedSleepStart = prefsManager.getLong("confirmed_sleep_start_time", 0)
         val latestWakeUpAlarmScheduledValue = prefsManager.getLong("latest_wake_up_alarm_scheduled", 0) != 0L  // ✅ 用 Long 代替 Boolean
         val lastStepCountValue = prefsManager.getLong("last_step_count", 0).toInt()  // ✅ 用 Long 代替 Int
+        
+        // ✅ 修复：恢复 lastScreenOffTime（关键！）
+        // 之前的版本没有持久化 lastScreenOffTime，导致服务重启后该值丢失
+        // 这会导致屏幕关闭时长始终为0秒，睡眠监测永远无法触发
+        val savedLastScreenOffTime = prefsManager.getLong("last_screen_off_time", 0)
+        if (savedLastScreenOffTime > 0) {
+            lastScreenOffTime = savedLastScreenOffTime
+            Log.i(tag, "✅ 恢复 lastScreenOffTime：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(savedLastScreenOffTime))}")
+            com.livewell.untils.AppLogger.i(tag, "✅ 恢复 lastScreenOffTime：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(savedLastScreenOffTime))}")
+        }
         
         if (lastConfirmedSleepStart > 0) {
             confirmedSleepStartTime = lastConfirmedSleepStart

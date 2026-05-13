@@ -228,25 +228,26 @@ class SettingsGuideActivity : AppCompatActivity() {
         when (mode) {
             PrefsManager.MODE_GUARDIAN -> {
                 // 被守护模式：本机用户，发送警报给紧急联系人
+                fragments.add(EmailProviderFragment())           // ✅ 发件人邮箱配置（SMTP）- 提前到第3步
+                fragments.add(EmailRecipientFragment())          // ✅ 收件人邮箱配置（紧急联系人）- 提前到第4步
                 fragments.add(AutoAlertModeFragment())           // 自动报警开关
                 fragments.add(AlertCriteriaFragment())           // 报警判断标准
                 fragments.add(AlertTimeFragment())               // 报警检查时间
                 fragments.add(ThresholdFragment())               // 报警阈值（步数 + 使用时长）
                 fragments.add(ConfirmMechanismFragment())        // 报警确认机制
-                fragments.add(EmailProviderFragment())           // 发件人邮箱配置（SMTP）
-                fragments.add(EmailRecipientFragment())          // 收件人邮箱配置（紧急联系人）
                 fragments.add(SleepMonitorFragment())            // 睡眠监测设置
             }
             PrefsManager.MODE_RECEIVER -> {
                 // 守护模式：监控他人，接收警报邮件
+                fragments.add(GuardianTargetsFragment())         // ✅ 添加被守护人（监控对象）- 提前到第3步
                 fragments.add(EmailProviderFragment())           // 发件人邮箱配置（IMAP，用于接收邮件）
-                fragments.add(GuardianTargetsFragment())         // 添加被守护人（监控对象）
             }
             PrefsManager.MODE_MIXED -> {
                 // 混合模式：同时具备被守护和守护功能
                 // 第一部分：守护功能配置
+                fragments.add(GuardianTargetsFragment())         // ✅ 添加被守护人 - 提前到第3步
                 fragments.add(EmailProviderFragment())           // 发件人邮箱配置（SMTP + IMAP）
-                fragments.add(GuardianTargetsFragment())         // 添加被守护人
+                fragments.add(EmailRecipientFragment())          // ✅ 收件人邮箱配置（紧急联系人）- 提前到第5步
                 
                 // 第二部分：被守护功能配置
                 fragments.add(AutoAlertModeFragment())           // 自动报警开关
@@ -254,7 +255,6 @@ class SettingsGuideActivity : AppCompatActivity() {
                 fragments.add(AlertTimeFragment())               // 报警检查时间
                 fragments.add(ThresholdFragment())               // 报警阈值（步数 + 使用时长）
                 fragments.add(ConfirmMechanismFragment())        // 报警确认机制
-                fragments.add(EmailRecipientFragment())          // 收件人邮箱配置（紧急联系人）
                 fragments.add(SleepMonitorFragment())            // 睡眠监测设置
             }
         }
@@ -265,8 +265,18 @@ class SettingsGuideActivity : AppCompatActivity() {
         // ✅ 根据实际 Fragment 数量更新 totalSteps
         totalSteps = fragments.size
         
-        viewPager.currentItem = 0
-        currentStep = 0
+        // ✅ 修复：保持在当前步骤（模式选择页面），不要跳回第0步
+        // 如果当前已经在模式选择页面（currentStep == 1），保持在那里
+        // 如果是首次加载，则从第0步开始
+        if (currentStep != 1) {
+            viewPager.currentItem = 0
+            currentStep = 0
+        } else {
+            // 保持在模式选择页面
+            viewPager.currentItem = 1
+            currentStep = 1
+        }
+        
         updateButtons()
     }
     
@@ -650,6 +660,15 @@ class PermissionsFragment : SettingsGuideFragment() {
      * 检查是否所有权限都已授予
      */
     fun areAllPermissionsGranted(): Boolean {
+        // ✅ 修复：添加初始化检查，防止 Fragment 未完全初始化时访问
+        if (!::cbAccessibility.isInitialized || 
+            !::cbNotification.isInitialized || 
+            !::cbClipboard.isInitialized || 
+            !::cbOverlay.isInitialized) {
+            android.util.Log.w("PermissionsFragment", "⚠️ CheckBox 尚未初始化，返回 false")
+            return false
+        }
+        
         return cbAccessibility.isChecked && 
                cbNotification.isChecked && 
                cbClipboard.isChecked && 
@@ -661,6 +680,17 @@ class PermissionsFragment : SettingsGuideFragment() {
      */
     fun getUngrantedPermissions(): List<String> {
         val ungranted = mutableListOf<String>()
+        
+        // ✅ 修复：添加初始化检查
+        if (!::cbAccessibility.isInitialized || 
+            !::cbNotification.isInitialized || 
+            !::cbClipboard.isInitialized || 
+            !::cbOverlay.isInitialized) {
+            android.util.Log.w("PermissionsFragment", "⚠️ CheckBox 尚未初始化，返回所有权限为未授予")
+            // 返回所有权限，让用户重新检查
+            return listOf("无障碍服务", "通知", "剪贴板", "悬浮窗", "使用统计", "电池优化", "精确闹钟")
+        }
+        
         if (!cbAccessibility.isChecked) ungranted.add("无障碍服务")
         if (!cbNotification.isChecked) ungranted.add("通知")
         if (!cbClipboard.isChecked) ungranted.add("剪贴板")
