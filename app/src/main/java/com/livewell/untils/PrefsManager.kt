@@ -1579,27 +1579,25 @@ fun getAllPrefs(): Map<String, *> {
 fun cleanupOldSnapshots(currentDate: String) {
     try {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val calendar = Calendar.getInstance()
-        calendar.time = dateFormat.parse(currentDate) ?: Date()
-        
+        val baseCal = Calendar.getInstance()
+        baseCal.time = dateFormat.parse(currentDate) ?: Date()
+
         var cleanedCount = 0
-        
-        // 删除 7-30 天前的快照
-        for (i in 7..30) {
-            calendar.add(Calendar.DAY_OF_YEAR, -1)
-            val oldDate = dateFormat.format(calendar.time)
-            
+        // ✅ Fix #3: 修复：真正清理 7-30 天前的快照（之前误删 1-24 天）
+        for (daysAgo in 7..30) {
+            val cal = baseCal.clone() as Calendar
+            cal.add(Calendar.DAY_OF_YEAR, -daysAgo)
+            val oldDate = dateFormat.format(cal.time)
+
             val hadSnapshot = getLong("pre_sleep_time_$oldDate", 0) > 0
             if (hadSnapshot) {
                 removePreSleepSnapshot(oldDate)
                 cleanedCount++
             }
         }
-        
         if (cleanedCount > 0) {
-            android.util.Log.i("PrefsManager", "✅ 已清理 $cleanedCount 个旧快照")
+            android.util.Log.i("PrefsManager", "✅ 已清理 $cleanedCount 个 7 天前的旧快照")
         }
-        
     } catch (e: Exception) {
         android.util.Log.e("PrefsManager", "❌ 清理旧快照失败：${e.message}", e)
     }

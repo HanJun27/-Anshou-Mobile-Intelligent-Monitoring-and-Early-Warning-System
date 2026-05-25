@@ -63,6 +63,7 @@ class SleepMonitorService : Service(), SensorEventListener {
     private var isSleepMonitoring = false
     private var lastStepCount = 0
     private var lastScreenOffTime: Long = 0
+    private var lastScreenOnTime: Long = 0  // ✅ Fix #1: 记录亮屏时间，用于判断是否需要重置关闭时间
     private var possibleSleepStartTime: Long = 0
     private var confirmedSleepStartTime: Long = 0
         get() = prefsManager.getLong("confirmed_sleep_start_time", 0)
@@ -165,6 +166,12 @@ class SleepMonitorService : Service(), SensorEventListener {
                 enterLowPowerMode()
                 scheduleSleepWindowAlarm() // ✅ 添加：设置睡眠窗口启动闹钟
             }
+            
+            // ✅ Fix #4: 关键修复：无条件设置起床异常检查闹钟
+            // 之前仅在 confirmSleep() 或 onCreate 命中睡眠窗口时设置，
+            // 如果用户白天开 App 且当晚入睡检测失败，今天的起床警报闹钟就完全不会触发。
+            // 现在改为：服务每次启动都把闹钟设到下一次“预设起床 + 容差”时刻。
+            scheduleLatestWakeUpAlarm()
             
             Log.i(tag, "✅ 睡眠监测服务初始化完成")
             com.livewell.untils.AppLogger.i(tag, "✅ 睡眠监测服务初始化完成")
@@ -315,23 +322,33 @@ class SleepMonitorService : Service(), SensorEventListener {
      * 处理屏幕关闭事件
      */
     private fun handleScreenOff() {
-        // ✅ 修复：每次都更新屏幕关闭时间，不要用 0 来判断
-        // 之前的逻辑有问题：if (lastScreenOffTime == 0L) 导致只有在第一次关闭时才记录
-        // 如果用户在入睡前多次查看手机，lastScreenOffTime 会被反复重置为 0
+        val now = System.currentTimeMillis()
         val previousScreenOffTime = lastScreenOffTime
-        lastScreenOffTime = System.currentTimeMillis()
-        
-        // ✅ 关键修复：持久化 lastScreenOffTime，防止服务重启后丢失
-        prefsManager.saveLong("last_screen_off_time", lastScreenOffTime)
-        
-        if (previousScreenOffTime == 0L) {
-            Log.i(tag, "📱 屏幕关闭（首次记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}")
-            com.livewell.untils.AppLogger.i(tag, "📱 屏幕关闭（首次记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}")
+
+        // ✅ Fix #1: 关键修复：不再无条件重置 lastScreenOffTime
+        // 仅当（a）首次记录，或（b）刚才用户真正在使用手机（亮屏≥5分钟）才重置
+        // 否则视为“夜间短暂查看手机”，保留原始关闭时间以累积入睡判定窗口
+        val SCREEN_ON_RESET_THRESHOLD = 5 * 60 * 1000L  // 5分钟
+        val screenOnDuration = if (lastScreenOnTime > 0) now - lastScreenOnTime else 0L
+
+        val shouldUpdate = (lastScreenOffTime == 0L) || (screenOnDuration >= SCREEN_ON_RESET_THRESHOLD)
+
+        if (shouldUpdate) {
+            lastScreenOffTime = now
+            prefsManager.saveLong("last_screen_off_time", lastScreenOffTime)
+            if (previousScreenOffTime == 0L) {
+                Log.i(tag, "📱 屏幕关闭（首次记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}")
+                com.livewell.untils.AppLogger.i(tag, "📱 屏幕关闭（首次记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}")
+            } else {
+                Log.i(tag, "📱 屏幕关闭（亮屏${screenOnDuration / 1000}秒后重置）")
+                com.livewell.untils.AppLogger.i(tag, "📱 屏幕关闭（亮屏${screenOnDuration / 1000}秒后重置）")
+            }
         } else {
-            val offDuration = lastScreenOffTime - previousScreenOffTime
-            Log.d(tag, "📱 屏幕关闭（重新记录）：${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(lastScreenOffTime))}, 间隔=${offDuration/1000}秒")
+            val keptOffDuration = now - lastScreenOffTime
+            Log.d(tag, "📱 短暂亮屏${screenOnDuration / 1000}秒后再次关闭，保留原始关闭时间，已累积关闭${keptOffDuration / 1000}秒")
+            com.livewell.untils.AppLogger.d(tag, "📱 短暂亮屏${screenOnDuration / 1000}秒后再次关闭，保留原始关闭时间")
         }
-        
+
         // ✅ 关键事件：立即保存缓存数据
         if (sleepDataCache.isNotEmpty()) {
             tryBatchSaveData()
@@ -347,6 +364,9 @@ class SleepMonitorService : Service(), SensorEventListener {
      * 处理屏幕亮起事件
      */
     private fun handleScreenOn() {
+        // ✅ Fix #1: 记录亮屏时刻
+        lastScreenOnTime = System.currentTimeMillis()
+        
         // ✅ 修复：先记录屏幕关闭时长，再重置
         if (lastScreenOffTime > 0) {
             val screenOffDuration = System.currentTimeMillis() - lastScreenOffTime
@@ -820,6 +840,9 @@ class SleepMonitorService : Service(), SensorEventListener {
         startAccelerometerMonitoring()
         scheduleStepCheck()
         
+        // ✅ Fix #4: 确保从低功耗唤醒后也重新设置起床异常闹钟
+        scheduleLatestWakeUpAlarm()
+        
         Log.i(tag, "✅ 完整监测已启动")
     }
     
@@ -1105,6 +1128,11 @@ class SleepMonitorService : Service(), SensorEventListener {
             lastMotionTime = System.currentTimeMillis()
             consecutiveSleepChecks = 0 // ✅ 重置入睡检查计数器
             
+            // ✅ Fix #1: 关键修复：重置屏幕关闭时间，让下一次睡眠周期能正确累积
+            lastScreenOffTime = 0
+            lastScreenOnTime = 0
+            prefsManager.saveLong("last_screen_off_time", 0)
+            
             // ✅ 取消邮件重试闹钟（防止用户醒来后还重复发送警报）
             cancelEmailRetryAlarm()
             
@@ -1175,6 +1203,11 @@ class SleepMonitorService : Service(), SensorEventListener {
         lastStepCount = getCurrentStepCount()
         lastMotionTime = System.currentTimeMillis()
         consecutiveSleepChecks = 0
+        
+        // ✅ Fix #1: 关键修复：重置屏幕关闭时间，让下一次睡眠周期能正确累积
+        lastScreenOffTime = 0
+        lastScreenOnTime = 0
+        prefsManager.saveLong("last_screen_off_time", 0)
         
         Log.i(tag, "⏰ 强制唤醒 - 醒来时间：${Date(wakeTime)}, 睡眠时长：${sleepDuration / 1000 / 60}分钟")
         
@@ -1658,6 +1691,11 @@ class SleepMonitorService : Service(), SensorEventListener {
         // 重置睡眠状态（防止重复报警）
         confirmedSleepStartTime = 0
         latestWakeUpAlarmScheduled = false
+        
+        // ✅ Fix #1: 关键修复：重置屏幕关闭时间，让下一次睡眠周期能正确累积
+        lastScreenOffTime = 0
+        lastScreenOnTime = 0
+        prefsManager.saveLong("last_screen_off_time", 0)
     
         Log.i(tag, "超时睡眠警报已发送")
         // ✅ 写入文件日志
@@ -2045,11 +2083,25 @@ class SleepMonitorService : Service(), SensorEventListener {
     private fun recordPreSleepDataSnapshot(sleepTime: Long) {
         try {
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            // ✅ 修复：使用入睡当天的日期，而不是前一天
-            val sleepDate = Calendar.getInstance().apply {
+            
+            // ✅ Fix #2: 修复：若用户在凌晨（早于预设起床时间）才入睡，把这次入睡归为“前一天”
+            //   例如预设起床 6:00，用户 1:30 才睡，则快照日期记为前一天
+            val sleepCal = Calendar.getInstance().apply {
                 time = Date(sleepTime)
             }
-            val sleepDateStr = dateFormat.format(sleepDate.time)
+            val sleepHour = sleepCal.get(Calendar.HOUR_OF_DAY)
+            val sleepMinute = sleepCal.get(Calendar.MINUTE)
+            val sleepMinutesOfDay = sleepHour * 60 + sleepMinute
+
+            val wakeHour = prefsManager.getWakeUpHour()
+            val wakeMinute = prefsManager.getWakeUpMinute()
+            val wakeMinutesOfDay = wakeHour * 60 + wakeMinute
+
+            if (sleepMinutesOfDay < wakeMinutesOfDay) {
+                sleepCal.add(Calendar.DAY_OF_YEAR, -1)
+                com.livewell.untils.AppLogger.i(tag, "🌙 凌晨入睡，快照日期回退到前一天")
+            }
+            val sleepDateStr = dateFormat.format(sleepCal.time)
             
             android.util.Log.i(tag, "📅 睡前快照日期计算：")
             android.util.Log.i(tag, "   入睡时间：${dateFormat.format(Date(sleepTime))}")
