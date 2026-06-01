@@ -202,9 +202,11 @@ class CheckinService : Service() {
     com.livewell.untils.AppLogger.i(tag, "🚨 触发签到警报")
     
     // ✅ 记录报警时间（避免重复报警）
+    // 注意：此处在"发起报警流程时"即标记当天，用于防止 executor + AlarmManager
+    // 两路定时检查在同一分钟内并发触发导致重复发送（竞态）。
+    // 当天的失败不会影响"次日"再次报警（dedup 按日期判断）。
     prefsManager.saveLong("last_alert_time", System.currentTimeMillis())
     
-    // ✅ 记录最后报警时间（避免重复报警）
     prefsManager.saveLastAlertTime(System.currentTimeMillis())
     Log.i(tag, "已记录最后报警时间：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}")
     
@@ -322,6 +324,21 @@ private fun performSafetyCheck() {
     // ✅ 写入文件日志
     com.livewell.untils.AppLogger.i(tag, "====== 开始安全检查 ======")
     com.livewell.untils.AppLogger.i(tag, "⏰ 检查触发时间：$checkTimeStr")
+    
+    // ✅ 新增（调试 5/29 19:39 非定时触发之谜）：把调用栈中最相关的几帧写进系统日志查看器，
+    //   下次出现非预期时间的"开始安全检查"，就能从这里直接看出是哪条路径触发的。
+    try {
+        val stack = Thread.currentThread().stackTrace
+        val relevant = stack.asSequence()
+            .drop(1)
+            .filter { it.className.startsWith("com.livewell") }
+            .take(6)
+            .joinToString(" → ") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" }
+        com.livewell.untils.AppLogger.i(tag, "🔎 触发链：$relevant")
+        com.livewell.untils.AppLogger.i(tag, "🔎 线程：${Thread.currentThread().name}")
+    } catch (e: Exception) {
+        // 调试日志不影响业务
+    }
     
     if (prefsManager.isTestMode()) {
         Log.i(tag, "测试模式，执行测试检查")

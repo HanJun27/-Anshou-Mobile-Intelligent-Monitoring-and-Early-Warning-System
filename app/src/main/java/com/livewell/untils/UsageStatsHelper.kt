@@ -23,20 +23,49 @@ class UsageStatsHelper(private val context: Context) {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }
+        val startOfToday = calendar.timeInMillis
+        val now = System.currentTimeMillis()
 
-        val stats = usageStatsManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            calendar.timeInMillis,
-            System.currentTimeMillis()
-        )
+        // ✅ 关键修复（凌晨数据穿透）：
+        //   旧实现用 queryUsageStats(INTERVAL_DAILY, start, end)，会把"整个跨边界的日桶"
+        //   全部返回，且循环里把每个返回项的 totalTimeInForeground 累加，
+        //   导致凌晨（00:00 ~ 系统日桶真正切到今天之前的窗口）查询时，把昨天一整天的
+        //   使用时长也算到"今天"里。这正是 6/1 07:36 邮件里"今日使用时长=607 分钟"
+        //   接近 5/31 全天 (10h30m≈630) 而 11:00 后回落到 ~180 分钟的成因。
+        //
+        // queryAndAggregateUsageStats 会按 (begin, end) 真正聚合每个包在该时间窗内的
+        // 前台时长，每个包只出现一次，结果就是"从今天 00:00 到 now"的真实使用时长。
+        val statsMap: Map<String, android.app.usage.UsageStats>? = try {
+            usageStatsManager.queryAndAggregateUsageStats(startOfToday, now)
+        } catch (e: Exception) {
+            android.util.Log.e("UsageStatsHelper", "queryAndAggregateUsageStats 失败：${e.message}")
+            null
+        }
 
         var totalUsage = 0L
-        stats?.forEach { usageStats ->
-            val packageName = usageStats.packageName
-            // ✅ 扩大关键应用范围，更准确反映用户使用情况
-            if (isCriticalApp(packageName)) {
-                totalUsage += usageStats.totalTimeInForeground
+        if (statsMap != null && statsMap.isNotEmpty()) {
+            for ((packageName, usageStats) in statsMap) {
+                if (isCriticalApp(packageName)) {
+                    totalUsage += usageStats.totalTimeInForeground
+                }
             }
+        } else {
+            // 兜底：极少数 ROM 上 queryAndAggregateUsageStats 返回空，退化到旧路径
+            val stats = usageStatsManager.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY,
+                startOfToday,
+                now
+            )
+            // 按包名去重（同一包在 INTERVAL_DAILY 可能返回多个 entry），取最后一次（最新）
+            val perPackage = HashMap<String, Long>()
+            stats?.forEach { s ->
+                if (isCriticalApp(s.packageName)) {
+                    // 用 lastTimeUsed 较新者的 totalTimeInForeground 覆盖，避免简单累加重复计入
+                    val existing = perPackage[s.packageName] ?: 0L
+                    perPackage[s.packageName] = maxOf(existing, s.totalTimeInForeground)
+                }
+            }
+            totalUsage = perPackage.values.sum()
         }
 
         return TimeUnit.MILLISECONDS.toMinutes(totalUsage)

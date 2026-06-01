@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
+import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -29,11 +30,20 @@ class MailSender {
     }
 
     companion object {
-        // ✅ 主动等待网络的最长时间。凌晨 Doze 下唤起蜂窝网络通常需要 5-20 秒，
-        //   给到 45 秒留足余量。
+        // ✅ 主动等待网络的最长时间。凌晨 Doze 下唤起蜂窝网络通常需要 5-20 秒。
         private const val NETWORK_WAIT_TIMEOUT_MS = 45_000L
-        // ✅ WakeLock 持有时间：网络等待 + 邮件发送，给 90 秒上限防止泄漏
-        private const val WAKELOCK_TIMEOUT_MS = 90_000L
+        // ✅ 单次 SMTP 连接超时（毫秒）。第二轮里设的 20 秒，从最新日志看仍在凌晨 Doze 下被打满，
+        //   碰到的是 "Couldn't connect to host, ... timeout 20000"。提到 60 秒，
+        //   给从 Doze 唤起后的蜂窝数据通道一个真正完整的握手窗口。
+        private const val SMTP_CONNECT_TIMEOUT_MS = 60_000
+        private const val SMTP_READ_TIMEOUT_MS = 60_000
+        private const val SMTP_WRITE_TIMEOUT_MS = 60_000
+        // ✅ WakeLock 持有时间：网络等待 + 两次发送尝试 + 5 秒等待 + 余量
+        private const val WAKELOCK_TIMEOUT_MS = 240_000L
+        // ✅ 单次发送失败后的重试间隔
+        private const val RETRY_DELAY_MS = 5_000L
+        // ✅ 最多尝试次数（含首次）
+        private const val MAX_ATTEMPTS = 2
     }
 
     fun sendEmail(
@@ -56,8 +66,7 @@ class MailSender {
             Log.i(tag, "✅ 邮件发送线程已启动")
             com.livewell.untils.AppLogger.i(tag, "✅ 邮件发送线程已启动")
 
-            // ✅ 关键修复 1：获取 PARTIAL_WAKE_LOCK，保证凌晨 Doze 下 CPU 不被挂起，
-            //   否则 setExactAndAllowWhileIdle 给的执行窗口极短，网络还没起来线程就被冻结。
+            // ✅ 关键：PARTIAL_WAKE_LOCK 保证 Doze 下 CPU 不被冻结
             val powerManager = appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
             val wakeLock = powerManager.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
@@ -69,144 +78,162 @@ class MailSender {
                 Log.w(tag, "WakeLock 获取失败：${e.message}")
             }
 
-            val connectivityManager =
-                appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            var boundNetwork: Network? = null
-            var didBindProcess = false
+            val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
             try {
-                // ✅ 关键修复 2：主动等待 / 唤起网络，而不是只等 2 秒被动检查
-                val network = awaitUsableNetwork(connectivityManager)
-
+                // ✅ 1. 主动等待 / 唤起网络
+                val network = awaitUsableNetwork(cm)
                 if (network == null) {
-                    Log.e(tag, "❌ 等待 ${NETWORK_WAIT_TIMEOUT_MS / 1000} 秒后网络仍不可用，邮件发送失败")
+                    Log.e(tag, "❌ 等待 ${NETWORK_WAIT_TIMEOUT_MS / 1000} 秒后网络仍不可用")
                     com.livewell.untils.AppLogger.e(tag, "❌ 等待 ${NETWORK_WAIT_TIMEOUT_MS / 1000} 秒后网络仍不可用")
                     postError(callback, "网络不可用")
                     return@thread
                 }
 
-                boundNetwork = network
+                // ✅ 2. 诊断日志：网络类型/能力/SMTP 主机 DNS 解析（直接进系统日志查看器）
+                logNetworkDiagnostics(cm, network, host)
 
-                // ✅ 关键修复 3：把本进程的网络流量绑定到拿到的这张网（通常是被唤起的蜂窝网），
-                //   否则即使网络已 available，默认路由仍可能指向被挂起的 WiFi。
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // ✅ 3. 最多 MAX_ATTEMPTS 次尝试：首次绑定到拿到的网络；如失败且属于"连接类"错误，
+                //    等 RETRY_DELAY_MS 后再做一次"不绑定进程网络"的回退尝试——避免某些机型
+                //    bindProcessToNetwork 锁死在还没真正"通"的接口上。
+                var lastError: String? = null
+                for (attempt in 1..MAX_ATTEMPTS) {
+                    val useBind = (attempt == 1)
+                    var didBindProcess = false
                     try {
-                        didBindProcess = connectivityManager.bindProcessToNetwork(network)
-                        Log.i(tag, "🔗 已绑定进程到可用网络：$didBindProcess")
-                        com.livewell.untils.AppLogger.i(tag, "🔗 已绑定进程到可用网络：$didBindProcess")
+                        if (useBind && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            try {
+                                didBindProcess = cm.bindProcessToNetwork(network)
+                                com.livewell.untils.AppLogger.i(tag, "🔗 [尝试$attempt] 绑定进程到网络：$didBindProcess")
+                            } catch (e: Exception) {
+                                com.livewell.untils.AppLogger.w(tag, "🔗 [尝试$attempt] 绑定网络失败：${e.message}")
+                            }
+                        } else {
+                            com.livewell.untils.AppLogger.i(tag, "🔗 [尝试$attempt] 不绑定进程，走默认路由")
+                        }
+
+                        com.livewell.untils.AppLogger.i(tag, "📧 [尝试$attempt/${MAX_ATTEMPTS}] 开始 SMTP 发送（connectTimeout=${SMTP_CONNECT_TIMEOUT_MS / 1000}s）")
+                        doSmtpSend(host, port, fromEmail, authCode, toEmail, subject, content)
+
+                        Log.i(tag, "邮件发送成功")
+                        com.livewell.untils.AppLogger.i(tag, "✅ [尝试$attempt] Transport.send() 执行成功，邮件已发送")
+                        postSuccess(callback)
+                        return@thread
+                    } catch (e: MessagingException) {
+                        lastError = e.message ?: "未知 SMTP 错误"
+                        Log.e(tag, "[尝试$attempt] MessagingException：$lastError")
+                        com.livewell.untils.AppLogger.e(tag, "❌ [尝试$attempt] SMTP 失败：$lastError")
+                        if (!isRetryableSmtp(lastError)) {
+                            com.livewell.untils.AppLogger.e(tag, "↳ 错误非\"连接超时类\"，不再重试")
+                            break
+                        }
                     } catch (e: Exception) {
-                        Log.w(tag, "绑定进程到网络失败（继续尝试默认路由）：${e.message}")
+                        lastError = e.message ?: "未知异常"
+                        Log.e(tag, "[尝试$attempt] 未知异常：$lastError")
+                        com.livewell.untils.AppLogger.e(tag, "❌ [尝试$attempt] 未知异常：$lastError")
+                        break
+                    } finally {
+                        if (didBindProcess && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            try { cm.bindProcessToNetwork(null) } catch (_: Exception) {}
+                        }
+                    }
+
+                    if (attempt < MAX_ATTEMPTS) {
+                        com.livewell.untils.AppLogger.w(tag, "⏳ 等待 ${RETRY_DELAY_MS / 1000} 秒后做最后一次重试（不绑定进程网络）")
+                        try {
+                            Thread.sleep(RETRY_DELAY_MS)
+                        } catch (e: InterruptedException) {
+                            Thread.currentThread().interrupt()
+                            break
+                        }
                     }
                 }
 
-                Log.i(tag, "✅ 网络可用，开始发送邮件")
-                com.livewell.untils.AppLogger.i(tag, "✅ 网络可用，开始发送邮件")
-
-                Log.i(tag, "====== 开始发送邮件 ======")
-                Log.i(tag, "SMTP 主机：$host")
-                Log.i(tag, "SMTP 端口：$port")
-                Log.i(tag, "发件邮箱：$fromEmail")
-                Log.i(tag, "收件邮箱：$toEmail")
-                Log.i(tag, "主题：$subject")
-
-                val props = Properties().apply {
-                    put("mail.smtp.host", host)
-                    put("mail.smtp.port", port)
-                    put("mail.smtp.auth", "true")
-                    put("mail.smtp.starttls.enable", "true")
-                    put("mail.smtp.ssl.trust", host)
-
-                    // ✅ 关键修复 4：加上连接/读/写超时，避免凌晨半连接的 socket 永久挂死，
-                    //   也让重试机制能在合理时间内拿到失败结果而不是卡住。
-                    put("mail.smtp.connectiontimeout", "20000")
-                    put("mail.smtp.timeout", "30000")
-                    put("mail.smtp.writetimeout", "30000")
-
-                    // 对于 465 端口使用 SSL
-                    if (port == "465") {
-                        put("mail.smtp.socketFactory.port", port)
-                        put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
-                        put("mail.smtp.socketFactory.fallback", "false")
-                    }
-                }
-
-                val session = Session.getInstance(props, object : Authenticator() {
-                    override fun getPasswordAuthentication(): PasswordAuthentication {
-                        return PasswordAuthentication(fromEmail, authCode)
-                    }
-                })
-
-                val message = MimeMessage(session).apply {
-                    setFrom(InternetAddress(fromEmail))
-                    setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
-                    setSubject(subject)
-                    setText(content)
-                    sentDate = Date()
-                }
-
-                Log.i(tag, "正在发送...")
-                com.livewell.untils.AppLogger.i(tag, "📧 正在调用 Transport.send()...")
-                Transport.send(message)
-                Log.i(tag, "邮件发送成功")
-                com.livewell.untils.AppLogger.i(tag, "✅ Transport.send() 执行成功，邮件已发送")
-
-                postSuccess(callback)
-
-            } catch (e: MessagingException) {
-                e.printStackTrace()
-                Log.e(tag, "邮件发送失败：${e.message}")
-                com.livewell.untils.AppLogger.e(tag, "❌ MessagingException：${e.message}")
-                com.livewell.untils.AppLogger.e(tag, "异常堆栈：${e.stackTraceToString()}")
-                postError(callback, "邮件发送失败：${e.message}")
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e(tag, "未知错误：${e.message}")
-                com.livewell.untils.AppLogger.e(tag, "❌ 未知异常：${e.message}")
-                com.livewell.untils.AppLogger.e(tag, "异常堆栈：${e.stackTraceToString()}")
-                postError(callback, "未知错误：${e.message}")
+                postError(callback, "邮件发送失败：${lastError ?: "未知错误"}")
             } finally {
-                // ✅ 恢复默认网络路由，避免影响 App 其他网络请求
-                if (didBindProcess && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    try {
-                        connectivityManager.bindProcessToNetwork(null)
-                    } catch (e: Exception) {
-                        Log.w(tag, "解绑进程网络失败：${e.message}")
-                    }
-                }
                 if (wakeLock.isHeld) {
-                    try {
-                        wakeLock.release()
-                    } catch (e: Exception) {
-                        Log.w(tag, "释放 WakeLock 失败：${e.message}")
-                    }
+                    try { wakeLock.release() } catch (_: Exception) {}
                 }
             }
         }
-
-        Log.i(tag, "✅ sendEmail 方法执行完毕（线程已启动）")
-        com.livewell.untils.AppLogger.i(tag, "✅ sendEmail 方法执行完毕（线程已启动）")
     }
 
     /**
-     * ✅ 主动等待一张可用（具备 INTERNET 能力）的网络。
-     *
-     * 1. 快速路径：当前已有具备 INTERNET 能力的网络，直接返回。
-     * 2. 慢速路径：通过 requestNetwork() 主动请求系统唤起一张网络（凌晨 Doze 下能唤起蜂窝），
-     *    用 CountDownLatch 阻塞等待回调，最长 NETWORK_WAIT_TIMEOUT_MS。
-     * 3. 兜底：若 requestNetwork 抛异常（如缺权限），退化为轮询 activeNetwork。
+     * 单次 SMTP 发送（同步、抛异常）
+     */
+    private fun doSmtpSend(
+        host: String,
+        port: String,
+        fromEmail: String,
+        authCode: String,
+        toEmail: String,
+        subject: String,
+        content: String
+    ) {
+        val props = Properties().apply {
+            put("mail.smtp.host", host)
+            put("mail.smtp.port", port)
+            put("mail.smtp.auth", "true")
+            put("mail.smtp.starttls.enable", "true")
+            put("mail.smtp.ssl.trust", host)
+            // ✅ 60 秒级超时，覆盖凌晨从 Doze 唤起后蜂窝数据通道完全可用的窗口
+            put("mail.smtp.connectiontimeout", SMTP_CONNECT_TIMEOUT_MS.toString())
+            put("mail.smtp.timeout", SMTP_READ_TIMEOUT_MS.toString())
+            put("mail.smtp.writetimeout", SMTP_WRITE_TIMEOUT_MS.toString())
+
+            if (port == "465") {
+                put("mail.smtp.socketFactory.port", port)
+                put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
+                put("mail.smtp.socketFactory.fallback", "false")
+            }
+        }
+
+        val session = Session.getInstance(props, object : Authenticator() {
+            override fun getPasswordAuthentication(): PasswordAuthentication {
+                return PasswordAuthentication(fromEmail, authCode)
+            }
+        })
+
+        val message = MimeMessage(session).apply {
+            setFrom(InternetAddress(fromEmail))
+            setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
+            setSubject(subject)
+            setText(content)
+            sentDate = Date()
+        }
+
+        Transport.send(message)
+    }
+
+    /**
+     * 判定 SMTP 错误是否值得"等几秒再试一次"
+     */
+    private fun isRetryableSmtp(msg: String): Boolean {
+        val low = msg.lowercase(Locale.ROOT)
+        return low.contains("couldn't connect") ||
+            low.contains("connect to host") ||
+            low.contains("timeout") ||
+            low.contains("timed out") ||
+            low.contains("connection reset") ||
+            low.contains("network is unreachable") ||
+            low.contains("no route to host") ||
+            low.contains("sslhandshake") ||
+            low.contains("unknownhost")
+    }
+
+    /**
+     * 主动等待可用网络（先快速路径、再 requestNetwork、最后轮询兜底）
      */
     private fun awaitUsableNetwork(cm: ConnectivityManager): Network? {
-        // 1. 快速路径
         currentInternetNetwork(cm)?.let {
             Log.i(tag, "🔍 已有可用网络，直接使用")
             com.livewell.untils.AppLogger.i(tag, "🔍 已有可用网络，直接使用")
             return it
         }
 
-        Log.w(tag, "⚠️ 当前无可用网络，主动请求唤起网络（最长等待 ${NETWORK_WAIT_TIMEOUT_MS / 1000} 秒）...")
+        Log.w(tag, "⚠️ 当前无可用网络，主动请求唤起网络（最长 ${NETWORK_WAIT_TIMEOUT_MS / 1000} 秒）")
         com.livewell.untils.AppLogger.w(tag, "⚠️ 当前无可用网络，主动请求唤起网络...")
 
-        // 2. 慢速路径：主动请求网络
         val latch = CountDownLatch(1)
         val result = AtomicReference<Network?>(null)
 
@@ -227,28 +254,20 @@ class MailSender {
             requested = true
             latch.await(NETWORK_WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
-            // 例如缺少 CHANGE_NETWORK_STATE 权限时抛 SecurityException
             Log.e(tag, "requestNetwork 失败，退化为轮询：${e.message}")
             com.livewell.untils.AppLogger.e(tag, "requestNetwork 失败，退化为轮询：${e.message}")
         } finally {
             if (requested) {
-                try {
-                    cm.unregisterNetworkCallback(netCallback)
-                } catch (e: Exception) {
-                    // ignore
-                }
+                try { cm.unregisterNetworkCallback(netCallback) } catch (_: Exception) {}
             }
         }
 
         result.get()?.let { return it }
 
-        // 3. 兜底：轮询一段时间，看默认网络是否恢复
         val deadline = System.currentTimeMillis() + 5_000L
         while (System.currentTimeMillis() < deadline) {
             currentInternetNetwork(cm)?.let { return it }
-            try {
-                Thread.sleep(500)
-            } catch (e: InterruptedException) {
+            try { Thread.sleep(500) } catch (e: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break
             }
@@ -256,9 +275,6 @@ class MailSender {
         return currentInternetNetwork(cm)
     }
 
-    /**
-     * 返回当前具备 INTERNET 能力的活动网络（无则返回 null）
-     */
     private fun currentInternetNetwork(cm: ConnectivityManager): Network? {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -278,6 +294,53 @@ class MailSender {
         } catch (e: Exception) {
             Log.e(tag, "网络检查失败：${e.message}")
             null
+        }
+    }
+
+    /**
+     * 把"拿到的是哪种网"、"是否被系统验证过"、"SMTP 主机 DNS 解析结果"
+     * 全部写进系统日志查看器，方便事后排查为什么凌晨连不上。
+     */
+    private fun logNetworkDiagnostics(cm: ConnectivityManager, network: Network, host: String) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val caps = cm.getNetworkCapabilities(network)
+                val transport = when {
+                    caps == null -> "未知"
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WiFi"
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "蜂窝"
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "以太网"
+                    else -> "其他"
+                }
+                val validated = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && caps != null)
+                    caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) else false
+                val notMetered = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && caps != null)
+                    caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) else false
+                com.livewell.untils.AppLogger.i(tag, "🌐 网络类型：$transport，已验证：$validated，非计量：$notMetered")
+            }
+        } catch (e: Exception) {
+            com.livewell.untils.AppLogger.w(tag, "诊断网络能力失败：${e.message}")
+        }
+
+        // DNS 解析诊断（用绑定的 network 解析，反映这条网真的能查到 SMTP 主机）
+        try {
+            val addrs: Array<InetAddress>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                try { network.getAllByName(host) } catch (e: Exception) { null }
+            } else null
+            if (addrs != null && addrs.isNotEmpty()) {
+                val ipList = addrs.joinToString { it.hostAddress ?: "?" }
+                com.livewell.untils.AppLogger.i(tag, "🌐 $host 解析到：$ipList")
+            } else {
+                // fallback：用默认 DNS
+                val def = try { InetAddress.getAllByName(host) } catch (e: Exception) { null }
+                if (def != null && def.isNotEmpty()) {
+                    com.livewell.untils.AppLogger.i(tag, "🌐 $host 默认 DNS 解析：${def.joinToString { it.hostAddress ?: "?" }}")
+                } else {
+                    com.livewell.untils.AppLogger.w(tag, "🌐 $host DNS 解析失败")
+                }
+            }
+        } catch (e: Exception) {
+            com.livewell.untils.AppLogger.w(tag, "诊断 DNS 失败：${e.message}")
         }
     }
 
