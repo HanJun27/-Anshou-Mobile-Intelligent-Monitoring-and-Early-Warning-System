@@ -34,6 +34,13 @@ class BootReceiver : BroadcastReceiver() {
                 when (mode) {
                     PrefsManager.MODE_GUARDIAN -> {
                         CheckinService.start(context)
+                        // ✅ 之前漏了：守护模式开机后睡眠监测服务也要拉起来，否则重启后睡眠检测就没了
+                        try {
+                            com.livewell.service.SleepMonitorService.start(context)
+                            Log.i(tag, "✅ 开机自动启动 SleepMonitorService")
+                        } catch (e: Exception) {
+                            Log.e(tag, "开机启动 SleepMonitorService 失败：${e.message}")
+                        }
                     }
                     PrefsManager.MODE_RECEIVER -> {
                         val emailIntent = Intent(context, EmailReceiverService::class.java)
@@ -45,6 +52,11 @@ class BootReceiver : BroadcastReceiver() {
                     }
                     PrefsManager.MODE_MIXED -> {
                         CheckinService.start(context)
+                        try {
+                            com.livewell.service.SleepMonitorService.start(context)
+                        } catch (e: Exception) {
+                            Log.e(tag, "开机启动 SleepMonitorService 失败：${e.message}")
+                        }
                         val emailIntent = Intent(context, EmailReceiverService::class.java)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             context.startForegroundService(emailIntent)
@@ -56,6 +68,17 @@ class BootReceiver : BroadcastReceiver() {
                 
                 // 设置 Alarm
                 scheduleAlertAlarm(context, prefsManager)
+                
+                // ✅ 关键修复（用户反馈）：开机后也要把无声音乐保活拉起来，否则用户重启手机后
+                //   即使偏好为开启也得手动进 App 才会真正运行。
+                try {
+                    if (prefsManager.isSilentMusicEnabled()) {
+                        com.livewell.service.SilentMusicService.start(context)
+                        Log.i(tag, "✅ 开机自动启动无声音乐保活")
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "开机启动无声音乐保活失败：${e.message}")
+                }
                 
                 Log.i(tag, "开机启动完成")
              } catch (e: Exception) {

@@ -121,8 +121,11 @@ class MailSender {
                         return@thread
                     } catch (e: MessagingException) {
                         lastError = e.message ?: "未知 SMTP 错误"
+                        // ✅ 把根因异常类型也打出来，区分"立即拒绝(ConnectException)"还是"真的超时(SocketTimeoutException)"
+                        val rootCause = generateSequence<Throwable>(e) { it.cause }.lastOrNull() ?: e
                         Log.e(tag, "[尝试$attempt] MessagingException：$lastError")
                         com.livewell.untils.AppLogger.e(tag, "❌ [尝试$attempt] SMTP 失败：$lastError")
+                        com.livewell.untils.AppLogger.e(tag, "↳ 根因异常类型：${rootCause.javaClass.simpleName}：${rootCause.message}")
                         if (!isRetryableSmtp(lastError)) {
                             com.livewell.untils.AppLogger.e(tag, "↳ 错误非\"连接超时类\"，不再重试")
                             break
@@ -146,6 +149,26 @@ class MailSender {
                             Thread.currentThread().interrupt()
                             break
                         }
+                    }
+                }
+
+                // ✅ 关键新增：端口回退。若用户配置的是 SSL 端口 465，但两次都失败，
+                //   尝试一次"端口 587 + STARTTLS"。许多移动运营商在凌晨低功耗时会拦截 SMTPS(465)
+                //   但仍允许标准 Submission(587)。163.com 同时支持这两个端口。
+                if (port == "465" && lastError != null) {
+                    com.livewell.untils.AppLogger.w(tag, "🔁 端口 465 全部失败，回退尝试 587 + STARTTLS（许多运营商凌晨会挡 465 但放行 587）")
+                    try {
+                        doSmtpSend(host, "587", fromEmail, authCode, toEmail, subject, content)
+                        Log.i(tag, "邮件发送成功（587 端口回退）")
+                        com.livewell.untils.AppLogger.i(tag, "✅ [回退587] Transport.send() 执行成功，邮件已发送")
+                        postSuccess(callback)
+                        return@thread
+                    } catch (e: Exception) {
+                        val msg = e.message ?: "未知错误"
+                        val rootCause = generateSequence<Throwable>(e) { it.cause }.lastOrNull() ?: e
+                        com.livewell.untils.AppLogger.e(tag, "❌ [回退587] 失败：$msg")
+                        com.livewell.untils.AppLogger.e(tag, "↳ 根因异常类型：${rootCause.javaClass.simpleName}：${rootCause.message}")
+                        lastError = "$lastError ；587 回退也失败：$msg"
                     }
                 }
 
@@ -174,17 +197,28 @@ class MailSender {
             put("mail.smtp.host", host)
             put("mail.smtp.port", port)
             put("mail.smtp.auth", "true")
-            put("mail.smtp.starttls.enable", "true")
             put("mail.smtp.ssl.trust", host)
             // ✅ 60 秒级超时，覆盖凌晨从 Doze 唤起后蜂窝数据通道完全可用的窗口
             put("mail.smtp.connectiontimeout", SMTP_CONNECT_TIMEOUT_MS.toString())
             put("mail.smtp.timeout", SMTP_READ_TIMEOUT_MS.toString())
             put("mail.smtp.writetimeout", SMTP_WRITE_TIMEOUT_MS.toString())
 
-            if (port == "465") {
-                put("mail.smtp.socketFactory.port", port)
-                put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
-                put("mail.smtp.socketFactory.fallback", "false")
+            when (port) {
+                "465" -> {
+                    // SMTPS：连上即 SSL，STARTTLS 不适用
+                    put("mail.smtp.starttls.enable", "false")
+                    put("mail.smtp.socketFactory.port", port)
+                    put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory")
+                    put("mail.smtp.socketFactory.fallback", "false")
+                }
+                "587", "25" -> {
+                    // 标准 Submission 端口：先明文 TCP，再用 STARTTLS 升级到 TLS
+                    put("mail.smtp.starttls.enable", "true")
+                    put("mail.smtp.starttls.required", "true")
+                }
+                else -> {
+                    put("mail.smtp.starttls.enable", "true")
+                }
             }
         }
 

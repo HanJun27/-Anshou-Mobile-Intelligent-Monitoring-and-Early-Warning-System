@@ -2430,6 +2430,21 @@ private fun startAllServices() {
                             Log.e("MainActivity", "❌ EmailReceiverService 启动失败", e)
                         }
                         
+                        // ✅ 关键修复（用户反馈）：无声音乐保活服务此前只在"设置对话框被打开"时才启动，
+                        //   导致默认开启的偏好实际上从未生效。这里在 App 启动链最后一并启动它。
+                        try {
+                            if (prefsManager.isSilentMusicEnabled()) {
+                                com.livewell.service.SilentMusicService.start(this)
+                                Log.i("MainActivity", "✅ SilentMusicService 已启动（启动时自动开启）")
+                                com.livewell.untils.AppLogger.i("MainActivity", "✅ 无声音乐保活已启动")
+                            } else {
+                                Log.i("MainActivity", "ℹ️ 用户已关闭无声音乐保活，跳过")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "❌ SilentMusicService 启动失败", e)
+                            com.livewell.untils.AppLogger.e("MainActivity", "❌ 无声音乐保活启动失败：${e.message}")
+                        }
+                        
                         // ✅ 启动时光胶囊活动检测
                         scheduleTimeCapsuleWorker()
                         
