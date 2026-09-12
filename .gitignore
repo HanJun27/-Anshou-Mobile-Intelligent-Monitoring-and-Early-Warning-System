@@ -27,6 +27,7 @@ Background Management System/.vite/
 # Documentation files (md directory)
 md/
 *.md
+!README.md
 
 # Log files
 *.log
